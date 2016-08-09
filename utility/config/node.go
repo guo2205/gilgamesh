@@ -4,13 +4,14 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"time"
 )
 
 type NodeOption struct {
 	RemoteAddr string
 	LocalAddr  string
 	Cookie     uint64
-	Timeout    uint32
+	Timeout    time.Duration
 }
 
 func LoadNodeOption(filename string) (*NodeOption, error) {
@@ -42,6 +43,6 @@ func generateDefaultNodeOption() *NodeOption {
 		RemoteAddr: "127.0.0.1:6679",
 		LocalAddr:  "127.0.0.1:0",
 		Cookie:     12345678987654321,
-		Timeout:    10,
+		Timeout:    time.Second * 12,
 	}
 }
