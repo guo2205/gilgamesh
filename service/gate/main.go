@@ -26,7 +26,7 @@ func main() {
 
 	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
 
-	err = f.StartTransport(nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.gate", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartTransport(false, nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.gate", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
 		logger.Error("start Fractal Transport failed :", err)
 		return
@@ -35,7 +35,8 @@ func main() {
 
 	gateEntry := entry.NewGateEntry(f, gateOption)
 
-	gateService := service.NewGateService(logger, f, gateOption, gateEntry.WritePacket)
+	gateService := service.NewGateService(logger, f, gateOption,
+		gateEntry.WritePacket, gateEntry.CloseConn)
 
 	err = f.NewService("gate", gateService)
 	if err != nil {

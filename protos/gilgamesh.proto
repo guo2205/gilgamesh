@@ -443,3 +443,10 @@ message Public {
 		}
 	}
 }
+
+message Internal{
+	message Auth{
+		string Account = 1;
+		bytes Password = 2;
+	}
+}
