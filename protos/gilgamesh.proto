@@ -357,7 +357,7 @@ message Public {
 		}
 		
 		// 录像
-		message videotape{
+		message Videotape{
 			// 查询当前账户录像
 			message QueryList{
 			}
@@ -406,7 +406,7 @@ message Public {
 			}
 			
 			// 房间消息
-			message room{
+			message Room{
 				// 开始决斗
 				message StartDuel{
 				}
