@@ -1,0 +1,440 @@
+syntax = "proto3";
+
+package protos;
+
+message Public {
+	// 玩家设置数据
+	message PlayerData{
+		// 昵称
+		string NickName = 1;
+		
+		// 头像HashId
+		string AvatarHashId = 2;
+	}
+	
+	// 玩家游戏数据
+	message PlayerGameData{
+		uint32 Level = 1;
+		
+		bool VIP = 2;
+	}
+		
+	// 玩家信息
+	message Player{
+		string Account = 1;
+		
+		PlayerData Data = 2;
+		
+		PlayerGameData GameData = 3;
+	}
+	
+	// 卡组描述
+	message DeckDetails{
+		string Name = 1;
+		
+		string Desc = 2;
+		
+		string AvatarHashId = 3;
+	}
+	
+	// 卡组数据
+	message DeckData{
+		repeated uint32 Main = 1;
+		
+		repeated uint32 Extra = 2;
+		
+		repeated uint32 Side = 3;
+	}
+	
+	// 卡组
+	message Deck{
+		uint64 Id = 1;
+		
+		string DataHashId = 2;
+		
+		// 卡组描述
+		DeckDetails Details = 3;
+		
+		// 卡组数据
+		DeckData Data = 4;
+	}
+	
+	// 房间模式
+	enum RoomMode{
+		// 单局
+		Single = 0;
+		
+		// 比赛
+		Match = 1;
+		
+		// 2v2
+		Tag = 2;
+	}
+	
+	// 房间规则
+	enum RoomRule{
+		// OCG模式
+		Ocg = 0;
+		
+		// TCG模式
+		Tcg = 1;
+		
+		// 混合模式
+		OcgTcg = 2;
+	}
+	
+	// 房间选项
+	message RoomOption{
+		string Name = 1;
+		
+		string Password = 2;
+		
+		uint32 Lp = 3;
+		
+		uint32 HandCount = 4;
+		
+		uint32 DrawCount = 5;
+		
+		RoomMode Mode = 6;
+		
+		RoomRule Rule = 7;
+		
+		uint32 LFList = 8;
+	}
+	
+	// 房间状态
+	enum RoomState{
+		// 准备中
+		Ready = 0;
+		
+		// 准备完成
+		ReadyCompleted = 1;
+		
+		// 对战中
+		Duel = 2;
+	}
+	
+	// 房间对战者信息
+	message RoomPlayer{
+		Player Player = 1;
+		bool Ready = 2;
+		bool Master = 3;
+		DeckDetails UseDeck = 4;
+	}
+	
+	// 房间
+	message Room{
+		uint64 Id = 1;
+		
+		RoomOption Option = 2;
+		
+		repeated RoomPlayer Players = 3;
+		
+		repeated Player Visitors = 4;
+		
+		RoomState State = 5;
+	}
+	
+	// 禁限卡表
+	message LFList{
+		uint32 Id = 1;
+		
+		string Name = 2;
+		
+		repeated uint32 Forbidden = 3;
+		
+		repeated uint32 Limit = 4;
+		
+		repeated uint32 SemiLimit = 5;
+	}
+		
+	// 录像
+	message VideoTape{
+		uint64 Id = 1;
+		
+		string Name = 2;
+		
+		uint64 Timestamp = 3;
+	}
+	
+	message Stc{
+		// 登录结果
+		message LoginResponse{
+			bool State = 1;
+			string Reason = 2;
+		}
+		
+		// 资源
+		message Resource{
+			// 禁限卡表结果
+			message GetLFListResponse{
+				repeated LFList LFListList = 1;
+			}
+					
+			// 请求禁限卡表结果
+			message GetLFListDataResponse{
+				LFList LFList = 1;
+			}
+			
+			// 上传头像结果
+			message UploadAvatarResponse{
+				string AvatarHashId = 1;
+			}
+			
+			// 获取头像结果
+			message GetAvatarResponse{
+				string AvatarHashId = 1;
+				
+				bytes Data = 2;
+			}
+		}
+		
+		// 玩家
+		message Player{
+			// 需要创建玩家数据
+			message NeedCreatePlayer{
+			}
+			
+			// 查询结果
+			message QueryResponse{
+				repeated Player PlayerList = 1;
+			}
+			
+			// 创建结果
+			message CreateResponse{
+				bool State = 1;
+			}
+			
+			// 修改结果
+			message ModifyResponse{
+				bool State = 1;
+			}
+		}
+		
+		// 录像
+		message Videotape{
+			// 录像列表
+			message VideoTapeList{
+				repeated VideoTape VideoTapeList = 1;
+			}
+			
+			// 录像列表
+			message VideoTapeData{
+				string Id = 1;
+				bytes Data = 2;
+			}
+		}
+		
+		// 卡组消息
+		message Deck{
+			// 上传结果
+			message UploadResponse{
+				bool State = 1;
+			}
+			
+			// 下载结果
+			message DownloadResponse{
+				bool State = 1;
+				Deck Deck = 2;
+			}
+			
+			// 删除结果
+			message RemoveResponse{
+				bool State = 1;
+			}
+			
+			// 查询列表
+			message QueryListResponse{
+				repeated Deck DeckList = 1;
+			}
+		}
+		
+		// 大厅消息
+		message Hall{
+			
+			// 房间列表
+			message RoomList{
+				repeated Room RoomList = 1;
+			}
+			
+			// 房间被创建
+			message RoomCreated{
+				Room  Room = 1;
+			}
+			
+			// 房间被销毁
+			message RoomDestoried{
+				uint64 Id = 1;
+			}
+			
+			// 房间状态改变
+			message RoomStateChanged{
+				Room Room = 1;
+			}
+			
+			// 你进入了大厅
+			message YouEnterHall{
+			}
+			
+			// 你离开了大厅
+			message YouLeaveHall{
+			}
+			
+			// 房间消息
+			message Room{
+				// 你被请出房间
+				message YouBeKick{
+				}
+				
+				// 房间状态改变
+				message RoomStateChanged{
+					Room Room = 1;
+				}
+				
+				// 你进入了房间
+				message YouEnterRoom{
+					Room Room = 1;
+				}
+				
+				// 你离开了房间
+				message YouLeaveRoom{
+				}
+				
+			}
+		}
+	}
+	
+	message Cts{
+		// 登录
+		message Login{
+			string Account = 1;
+			bytes Password = 2;
+		}
+		
+		// 资源
+		message Resource{
+			// 获取禁限卡表
+			message GetLFList{
+			}
+			
+			// 获取指定禁限卡表数据
+			message GetLFListData{
+				uint32 Id = 1;
+			}
+			
+			// 上传头像
+			message UploadAvatar{
+				bytes Data = 1;
+			}
+			
+			// 获取头像
+			message GetAvatar{
+				string HashId = 1;
+			}
+		}
+		
+		// 玩家
+		message Player{
+			// 查询玩家信息
+			message Query{
+				repeated string AccountList = 1;
+			}
+			
+			// 创建玩家信息
+			message Create{
+				PlayerData Player = 1;
+			}
+			
+			// 修改玩家信息
+			message Modify{
+				PlayerData Player = 1;
+			}
+		}
+		
+		// 录像
+		message videotape{
+			// 查询当前账户录像
+			message QueryList{
+			}
+			
+			// 获取录像
+			message Get{
+				uint64 Id = 1;
+			}
+		}
+		
+		// 卡组
+		message Deck{
+			// 上传
+			message Upload{
+				Deck Deck = 1;
+			}
+			
+			// 下载
+			message Download{
+				uint64 Id = 1;
+			}
+			
+			// 删除
+			message Remove{
+				uint64 Id = 1;
+			}
+			
+			// 查询列表
+			message Query{
+			}
+		}
+		
+		// 大厅
+		message Hall{
+			// 创建房间
+			message CreateRoom{
+				RoomOption Option = 1;
+			}
+			
+			// 加入房间
+			message EnterRoom{
+				// 房间ID
+				uint64 Id = 1;
+				
+				string Password = 2;
+			}
+			
+			// 房间消息
+			message room{
+				// 开始决斗
+				message StartDuel{
+				}
+				
+				// 踢人
+				message Kick{
+					string Account = 1;
+				}
+				
+				// 变更房主
+				message ChangeMaster{
+					string Account = 1;
+				}
+				
+				// 改变使用的卡组
+				message ChangeUsedeck{
+					uint64 Id = 1;
+				}
+				
+				// 改变准备状态
+				message ChangeReady{
+					bool Ready = 1;
+				}
+				
+				// 改变阵营
+				message ChangeCamp{
+					uint32 Camp = 1;
+				}			
+				
+				// 离开房间
+				message Leave{
+				}
+			}
+		}
+	}
+}
