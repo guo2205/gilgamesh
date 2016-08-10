@@ -2,12 +2,18 @@
 package service
 
 import (
+	"errors"
 	"fractal/fractal"
 	"gilgamesh/utility/config"
 	"gilgamesh/utility/mylog"
 )
 
+var (
+	ErrUnknownMailType error = errors.New("unknown mail type")
+)
+
 type GateService struct {
+	fractal.DefaultServiceProvider
 	logger *mylog.Logger
 	f      *fractal.Fractal
 	option *config.GateOption
@@ -26,15 +32,12 @@ func NewGateService(logger *mylog.Logger,
 	}
 }
 
-func (c *GateService) OnStart() error {
-	return nil
-}
-
-func (c *GateService) OnMail(caller string, session uint64, data []byte) ([]byte, error) {
+func (c *GateService) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
 	c.logger.Debug(caller, session, data)
-	return []byte{}, nil
-}
-
-func (c *GateService) OnClose() error {
-	return nil
+	switch caller {
+	case "entry":
+		return c.doEntry(_type, session, data)
+	default:
+		return c.doOther(caller, _type, session, data)
+	}
 }
