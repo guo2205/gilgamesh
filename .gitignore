@@ -1,5 +1,4 @@
 *.exe
 *.bat
 *.json
-/protos/common.pb.go
-/protos/public.pb.go
+/protos/gilgamesh.pb.go
