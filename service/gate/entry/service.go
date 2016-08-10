@@ -45,7 +45,7 @@ func (c *_ConnService) WritePacket(d []byte) {
 
 func (c *_ConnService) RunService() error {
 	defer c.conn.Close()
-	defer c.entry.f.PostMail("gate", 1, "entry", c.session, nil)
+	defer c.entry.f.PostMail("gate", 1, "entry", c.session, []byte{})
 
 	ch := make(chan _ReadEvent, 30)
 
