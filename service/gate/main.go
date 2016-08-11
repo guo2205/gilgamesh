@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	logger *mylog.Logger = mylog.NewLogger(`Gate Service`, 4)
+	logger     *mylog.Logger = mylog.NewLogger(`Gate Node`, 4)
+	gateLogger *mylog.Logger = mylog.NewLogger(`Gate Service`, 4)
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 
 	gateEntry := entry.NewGateEntry(f, gateOption)
 
-	gateService := service.NewGateService(logger, f, gateOption,
+	gateService := service.NewGateService(gateLogger, f, gateOption,
 		gateEntry.WritePacket, gateEntry.CloseConn)
 
 	err = f.NewService("gate", gateService)

@@ -206,7 +206,7 @@ func (c *GateService) doEntryOffline(session uint64) error {
 
 func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
 	go func() {
-		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*3)
+		ret, _, err := c.f.SendMail("auth@public.global", 0, "gate", session, data, time.Second*3)
 		if err != nil {
 			c.closer(session)
 			return

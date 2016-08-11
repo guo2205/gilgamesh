@@ -44,7 +44,6 @@ func NewGateService(logger *mylog.Logger,
 }
 
 func (c *GateService) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
-	c.logger.Debug(caller, session, data)
 	switch caller {
 	case "entry":
 		return c.doEntry(_type, session, data)
