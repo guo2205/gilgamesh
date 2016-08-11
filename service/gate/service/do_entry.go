@@ -4,6 +4,7 @@ package service
 import (
 	"errors"
 	"gilgamesh/protos"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -37,7 +38,7 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 		if err != nil {
 			return err
 		}
-		return c.do_Public_Cts_Login(session, &obj)
+		return c.do_Public_Cts_Login(session, data, &obj)
 	case proto.MessageName((*protos.Public_Cts_Resource_GetAvatar)(nil)):
 		obj := protos.Public_Cts_Resource_GetAvatar{}
 		err := proto.Unmarshal(data, &obj)
@@ -203,7 +204,115 @@ func (c *GateService) doEntryOffline(session uint64) error {
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Login(session uint64, obj *protos.Public_Cts_Login) error {
+func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
+	go func() {
+		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*3)
+		if err != nil {
+			c.closer(session)
+			return
+		}
+		loginResponse := protos.Public_Stc_LoginResponse{}
+		err = proto.Unmarshal(ret, &loginResponse)
+		if err != nil {
+			c.closer(session)
+			return
+		}
+
+		err = c.writer(session, ret)
+		if err != nil {
+			c.closer(session)
+			return
+		}
+
+		if !loginResponse.State {
+			c.closer(session)
+			return
+		}
+
+		locker := protos.Internal_AcquireLocker{
+			Account: obj.Account,
+			Lock:    true,
+		}
+		lockData, _ := proto.Marshal(&locker)
+		locker.Lock = false
+		unlockData, _ := proto.Marshal(&locker)
+
+		_, _, err = c.f.SendMail("locker@public.global", 0, "gate", session, lockData, time.Second*12)
+		if err != nil {
+			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			c.closer(session)
+			return
+		}
+
+		queryOnline := protos.Internal_QueryOnline{
+			Account: obj.Account,
+		}
+		d, _ := proto.Marshal(&queryOnline)
+
+		ret, _, err = c.f.SendMail("online@public.global", 0, "gate", session, d, time.Second*12)
+		if err != nil {
+			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			c.closer(session)
+			return
+		}
+
+		queryOnlineResponse := protos.Internal_QueryOnlineResponse{}
+		err = proto.Unmarshal(ret, &queryOnlineResponse)
+		if err != nil {
+			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			c.closer(session)
+			return
+		}
+
+		if queryOnlineResponse.State {
+			kick := protos.Internal_Kick{
+				Session: queryOnlineResponse.Session,
+			}
+			d, _ := proto.Marshal(&kick)
+			_, _, err := c.f.SendMail(queryOnlineResponse.Where, 0, "gate", session, d, time.Second*6)
+			if err != nil {
+				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+				c.closer(session)
+				return
+			}
+		}
+
+		setOnline := protos.Internal_SetOnline{
+			Account: obj.Account,
+		}
+		d, _ = proto.Marshal(&setOnline)
+		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session, d, time.Second*6)
+		if err != nil {
+			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			c.closer(session)
+			return
+		}
+
+		c.f.InsertEvent("gate", func() {
+			client := &_Client{
+				Session: session,
+				Account: obj.Account,
+			}
+			c.clients[session] = client
+
+			go func() {
+				enterHall := protos.Internal_EnterHall{
+					Account: obj.Account,
+				}
+				d, _ = proto.Marshal(&enterHall)
+				_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session, d, time.Second*6)
+				if err != nil {
+					c.f.InsertEvent("gate", func() {
+						c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+						delete(c.clients, session)
+						c.closer(session)
+					})
+					return
+				}
+				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			}()
+		})
+	}()
 	return nil
 }
 

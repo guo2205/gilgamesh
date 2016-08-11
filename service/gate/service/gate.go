@@ -13,8 +13,8 @@ var (
 )
 
 type _Client struct {
-	Session    uint64
-	LoginCount int
+	Session uint64
+	Account string
 }
 
 type GateService struct {

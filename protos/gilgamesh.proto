@@ -445,8 +445,41 @@ message Public {
 }
 
 message Internal{
-	message Auth{
+	// 获取或者释放锁
+	message AcquireLocker{
 		string Account = 1;
-		bytes Password = 2;
+		bool lock = 2;
+	}
+	
+	// 查询账户在线状态
+	message QueryOnline{
+		string Account = 1;
+	}
+	
+	// 账户状态回应
+	message QueryOnlineResponse{
+		bool State = 1;
+		string Where = 2;
+		uint64 Session = 3;
+	}
+	
+	// 踢人
+	message Kick{
+		uint64 Session = 1;
+	}
+	
+	// 设置在线
+	message SetOnline{
+		string Account = 1;
+	}
+	
+	// 加入大厅
+	message EnterHall{
+		string Account = 1;
+	}
+	
+	// 离开大厅
+	message LeaveHall{
+		string Account = 1;
 	}
 }
