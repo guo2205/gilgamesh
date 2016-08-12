@@ -121,8 +121,8 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 			Lock:    false,
 		})
 
-		_, _, err = c.f.SendMail("locker@public.global", 0, "gate", session, lockData, time.Second*12)
-		if err != nil {
+		ret, _, err = c.f.SendMail("locker@public.global", 0, "gate", session, lockData, time.Second*12)
+		if err != nil || string(ret) != "success" {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			c.closer(session)
 			return
