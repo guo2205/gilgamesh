@@ -15,6 +15,9 @@ message Public {
 		
 		// 头像HashId
 		string AvatarHashId = 2;
+		
+		// 使用卡组
+		uint64 DeckId = 3;
 	}
 	
 	// 玩家游戏数据
@@ -354,6 +357,11 @@ message Public {
 			message Modify{
 				PlayerData Player = 1;
 			}
+						
+			// 改变使用的卡组
+			message ChangeUsedeck{
+				uint64 Id = 1;
+			}
 		}
 		
 		// 录像
@@ -421,11 +429,6 @@ message Public {
 					string Account = 1;
 				}
 				
-				// 改变使用的卡组
-				message ChangeUsedeck{
-					uint64 Id = 1;
-				}
-				
 				// 改变准备状态
 				message ChangeReady{
 					bool Ready = 1;
@@ -470,6 +473,11 @@ message Internal{
 	
 	// 设置在线
 	message SetOnline{
+		string Account = 1;
+	}
+	
+	// 查询玩家信息
+	message QueryPlayer{
 		string Account = 1;
 	}
 	

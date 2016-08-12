@@ -3,8 +3,7 @@ package main
 
 import (
 	"fractal/fractal"
-	"gilgamesh/service/global/locker"
-	"gilgamesh/service/global/online"
+	"gilgamesh/service/database/auth"
 	"gilgamesh/utility/config"
 	"gilgamesh/utility/mylog"
 	"log"
@@ -13,9 +12,8 @@ import (
 )
 
 var (
-	logger       *mylog.Logger = mylog.NewLogger(`Global Node`, 4)
-	lockerLogger *mylog.Logger = mylog.NewLogger(`Locker Service`, 4)
-	onlineLogger *mylog.Logger = mylog.NewLogger(`Online Service`, 4)
+	logger     *mylog.Logger = mylog.NewLogger(`Database Node`, 4)
+	authLogger *mylog.Logger = mylog.NewLogger(`Auth Service`, 4)
 )
 
 func main() {
@@ -28,26 +26,19 @@ func main() {
 
 	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
 
-	err = f.StartTransport(true, nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.global", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartTransport(true, nodeOption.LocalAddr, nodeOption.RemoteAddr, "ygo.database", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
 		logger.Error("start Fractal Transport failed :", err)
 		return
 	}
 	defer f.StopTransport()
 
-	err = f.NewService("locker", locker.NewService(lockerLogger, f))
+	err = f.NewService("auth", auth.NewService(authLogger, f))
 	if err != nil {
-		logger.Error("locker service new failed :", err)
+		logger.Error("auth service new failed :", err)
 		return
 	}
-	defer f.StopService("locker")
-
-	err = f.NewService("online", online.NewService(onlineLogger, f))
-	if err != nil {
-		logger.Error("online service new failed :", err)
-		return
-	}
-	defer f.StopService("online")
+	defer f.StopService("auth")
 
 	for {
 		time.Sleep(time.Hour)
