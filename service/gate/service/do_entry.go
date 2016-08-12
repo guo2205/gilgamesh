@@ -4,6 +4,7 @@ package service
 import (
 	"errors"
 	"gilgamesh/protos"
+	"gilgamesh/utility/utils"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -25,174 +26,58 @@ func (c *GateService) doEntry(_type uint32, session uint64, data []byte) ([]byte
 }
 
 func (c *GateService) doEntryNormal(session uint64, data []byte) error {
-	gl := protos.Gilgamesh{}
-	err := proto.Unmarshal(data, &gl)
+	obj, _type, err := utils.Unmarshal(data)
 	if err != nil {
 		return err
 	}
 
-	switch gl.Type {
+	switch _type {
 	case proto.MessageName((*protos.Public_Cts_Login)(nil)):
-		obj := protos.Public_Cts_Login{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Login(session, data, &obj)
+		return c.do_Public_Cts_Login(session, data, obj.(*protos.Public_Cts_Login))
 	case proto.MessageName((*protos.Public_Cts_Resource_GetAvatar)(nil)):
-		obj := protos.Public_Cts_Resource_GetAvatar{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Resource_GetAvatar(session, &obj)
+		return c.do_Public_Cts_Resource_GetAvatar(session, data, obj.(*protos.Public_Cts_Resource_GetAvatar))
 	case proto.MessageName((*protos.Public_Cts_Resource_GetLFList)(nil)):
-		obj := protos.Public_Cts_Resource_GetLFList{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Resource_GetLFList(session, &obj)
+		return c.do_Public_Cts_Resource_GetLFList(session, obj.(*protos.Public_Cts_Resource_GetLFList))
 	case proto.MessageName((*protos.Public_Cts_Resource_GetLFListData)(nil)):
-		obj := protos.Public_Cts_Resource_GetLFListData{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Resource_GetLFListData(session, &obj)
+		return c.do_Public_Cts_Resource_GetLFListData(session, obj.(*protos.Public_Cts_Resource_GetLFListData))
 	case proto.MessageName((*protos.Public_Cts_Resource_UploadAvatar)(nil)):
-		obj := protos.Public_Cts_Resource_UploadAvatar{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Resource_UploadAvatar(session, &obj)
+		return c.do_Public_Cts_Resource_UploadAvatar(session, obj.(*protos.Public_Cts_Resource_UploadAvatar))
 	case proto.MessageName((*protos.Public_Cts_Player_Create)(nil)):
-		obj := protos.Public_Cts_Player_Create{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Player_Create(session, &obj)
+		return c.do_Public_Cts_Player_Create(session, obj.(*protos.Public_Cts_Player_Create))
 	case proto.MessageName((*protos.Public_Cts_Player_Modify)(nil)):
-		obj := protos.Public_Cts_Player_Modify{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Player_Modify(session, &obj)
+		return c.do_Public_Cts_Player_Modify(session, obj.(*protos.Public_Cts_Player_Modify))
 	case proto.MessageName((*protos.Public_Cts_Player_Query)(nil)):
-		obj := protos.Public_Cts_Player_Query{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Player_Query(session, &obj)
+		return c.do_Public_Cts_Player_Query(session, obj.(*protos.Public_Cts_Player_Query))
 	case proto.MessageName((*protos.Public_Cts_Player_ChangeUsedeck)(nil)):
-		obj := protos.Public_Cts_Player_ChangeUsedeck{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Player_ChangeUsedeck(session, &obj)
+		return c.do_Public_Cts_Player_ChangeUsedeck(session, obj.(*protos.Public_Cts_Player_ChangeUsedeck))
 	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
-		obj := protos.Public_Cts_Videotape_Get{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Videotape_Get(session, &obj)
+		return c.do_Public_Cts_Videotape_Get(session, obj.(*protos.Public_Cts_Videotape_Get))
 	case proto.MessageName((*protos.Public_Cts_Videotape_QueryList)(nil)):
-		obj := protos.Public_Cts_Videotape_QueryList{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Videotape_QueryList(session, &obj)
+		return c.do_Public_Cts_Videotape_QueryList(session, obj.(*protos.Public_Cts_Videotape_QueryList))
 	case proto.MessageName((*protos.Public_Cts_Deck_Download)(nil)):
-		obj := protos.Public_Cts_Deck_Download{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Deck_Download(session, &obj)
+		return c.do_Public_Cts_Deck_Download(session, obj.(*protos.Public_Cts_Deck_Download))
 	case proto.MessageName((*protos.Public_Cts_Deck_Query)(nil)):
-		obj := protos.Public_Cts_Deck_Query{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Deck_Query(session, &obj)
+		return c.do_Public_Cts_Deck_Query(session, obj.(*protos.Public_Cts_Deck_Query))
 	case proto.MessageName((*protos.Public_Cts_Deck_Remove)(nil)):
-		obj := protos.Public_Cts_Deck_Remove{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Deck_Remove(session, &obj)
+		return c.do_Public_Cts_Deck_Remove(session, obj.(*protos.Public_Cts_Deck_Remove))
 	case proto.MessageName((*protos.Public_Cts_Deck_Upload)(nil)):
-		obj := protos.Public_Cts_Deck_Upload{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Deck_Upload(session, &obj)
+		return c.do_Public_Cts_Deck_Upload(session, obj.(*protos.Public_Cts_Deck_Upload))
 	case proto.MessageName((*protos.Public_Cts_Hall_CreateRoom)(nil)):
-		obj := protos.Public_Cts_Hall_CreateRoom{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_CreateRoom(session, &obj)
+		return c.do_Public_Cts_Hall_CreateRoom(session, obj.(*protos.Public_Cts_Hall_CreateRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_EnterRoom)(nil)):
-		obj := protos.Public_Cts_Hall_EnterRoom{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_EnterRoom(session, &obj)
+		return c.do_Public_Cts_Hall_EnterRoom(session, obj.(*protos.Public_Cts_Hall_EnterRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeCamp)(nil)):
-		obj := protos.Public_Cts_Hall_Room_ChangeCamp{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_ChangeCamp(session, &obj)
+		return c.do_Public_Cts_Hall_Room_ChangeCamp(session, obj.(*protos.Public_Cts_Hall_Room_ChangeCamp))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeMaster)(nil)):
-		obj := protos.Public_Cts_Hall_Room_ChangeMaster{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_ChangeMaster(session, &obj)
+		return c.do_Public_Cts_Hall_Room_ChangeMaster(session, obj.(*protos.Public_Cts_Hall_Room_ChangeMaster))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeReady)(nil)):
-		obj := protos.Public_Cts_Hall_Room_ChangeReady{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_ChangeReady(session, &obj)
+		return c.do_Public_Cts_Hall_Room_ChangeReady(session, obj.(*protos.Public_Cts_Hall_Room_ChangeReady))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_Kick)(nil)):
-		obj := protos.Public_Cts_Hall_Room_Kick{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_Kick(session, &obj)
+		return c.do_Public_Cts_Hall_Room_Kick(session, obj.(*protos.Public_Cts_Hall_Room_Kick))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_Leave)(nil)):
-		obj := protos.Public_Cts_Hall_Room_Leave{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_Leave(session, &obj)
+		return c.do_Public_Cts_Hall_Room_Leave(session, obj.(*protos.Public_Cts_Hall_Room_Leave))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_StartDuel)(nil)):
-		obj := protos.Public_Cts_Hall_Room_StartDuel{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_StartDuel(session, &obj)
+		return c.do_Public_Cts_Hall_Room_StartDuel(session, obj.(*protos.Public_Cts_Hall_Room_StartDuel))
 	default:
 		return ErrUnknownProtoType
 	}
@@ -229,13 +114,14 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 			return
 		}
 
-		locker := protos.Internal_AcquireLocker{
+		lockData := utils.Marshal(&protos.Internal_AcquireLocker{
 			Account: obj.Account,
 			Lock:    true,
-		}
-		lockData, _ := proto.Marshal(&locker)
-		locker.Lock = false
-		unlockData, _ := proto.Marshal(&locker)
+		})
+		unlockData := utils.Marshal(&protos.Internal_AcquireLocker{
+			Account: obj.Account,
+			Lock:    false,
+		})
 
 		_, _, err = c.f.SendMail("locker@public.global", 0, "gate", session, lockData, time.Second*12)
 		if err != nil {
@@ -244,12 +130,10 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 			return
 		}
 
-		queryOnline := protos.Internal_QueryOnline{
-			Account: obj.Account,
-		}
-		d, _ := proto.Marshal(&queryOnline)
-
-		ret, _, err = c.f.SendMail("online@public.global", 0, "gate", session, d, time.Second*12)
+		ret, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
+			utils.Marshal(&protos.Internal_QueryOnline{
+				Account: obj.Account,
+			}), time.Second*12)
 		if err != nil {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			c.closer(session)
@@ -265,11 +149,10 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 		}
 
 		if queryOnlineResponse.State {
-			kick := protos.Internal_Kick{
-				Session: queryOnlineResponse.Session,
-			}
-			d, _ := proto.Marshal(&kick)
-			_, _, err := c.f.SendMail(queryOnlineResponse.Where, 0, "gate", session, d, time.Second*6)
+			_, _, err := c.f.SendMail(queryOnlineResponse.Where, 0, "gate", session,
+				utils.Marshal(&protos.Internal_Kick{
+					Session: queryOnlineResponse.Session,
+				}), time.Second*6)
 			if err != nil {
 				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 				c.closer(session)
@@ -277,11 +160,10 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 			}
 		}
 
-		setOnline := protos.Internal_SetOnline{
-			Account: obj.Account,
-		}
-		d, _ = proto.Marshal(&setOnline)
-		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session, d, time.Second*6)
+		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
+			utils.Marshal(&protos.Internal_SetOnline{
+				Account: obj.Account,
+			}), time.Second*6)
 		if err != nil {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			c.closer(session)
@@ -295,11 +177,10 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 			}
 			c.clients[session] = client
 			go func() {
-				queryPlayer := protos.Internal_QueryPlayer{
-					Account: obj.Account,
-				}
-				d, _ = proto.Marshal(&queryPlayer)
-				ret, _, err = c.f.SendMail("player@ygo.database", 0, "gate", session, d, time.Second*6)
+				ret, _, err = c.f.SendMail("player@ygo.database", 0, "gate", session,
+					utils.Marshal(&protos.Internal_QueryPlayer{
+						Account: obj.Account,
+					}), time.Second*6)
 				if err != nil {
 					c.f.InsertEvent("gate", func() {
 						c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
@@ -310,9 +191,8 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 				}
 
 				if len(ret) == 0 {
-					needCreatePlayer := protos.Public_Stc_Player_NeedCreatePlayer{}
-					d, _ = proto.Marshal(&needCreatePlayer)
-					if err := c.writer(session, d); err != nil {
+					if err := c.writer(session,
+						utils.Marshal(&protos.Public_Stc_Player_NeedCreatePlayer{})); err != nil {
 						c.f.InsertEvent("gate", func() {
 							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 							delete(c.clients, session)
@@ -321,11 +201,10 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 						return
 					}
 				} else {
-					enterHall := protos.Internal_EnterHall{
-						Account: obj.Account,
-					}
-					d, _ = proto.Marshal(&enterHall)
-					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session, d, time.Second*6)
+					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
+						utils.Marshal(&protos.Internal_EnterHall{
+							Account: obj.Account,
+						}), time.Second*6)
 					if err != nil {
 						c.f.InsertEvent("gate", func() {
 							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
@@ -342,7 +221,24 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetAvatar(session uint64, obj *protos.Public_Cts_Resource_GetAvatar) error {
+func (c *GateService) do_Public_Cts_Resource_GetAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetAvatar) error {
+	go func() {
+		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Resource_GetAvatarResponse{
+					AvatarHashId: obj.HashId,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
