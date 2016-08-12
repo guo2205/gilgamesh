@@ -51,31 +51,31 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
 		return c.do_Public_Cts_Videotape_Get(session, data, obj.(*protos.Public_Cts_Videotape_Get))
 	case proto.MessageName((*protos.Public_Cts_Videotape_QueryList)(nil)):
-		return c.do_Public_Cts_Videotape_QueryList(session, obj.(*protos.Public_Cts_Videotape_QueryList))
+		return c.do_Public_Cts_Videotape_QueryList(session, data, obj.(*protos.Public_Cts_Videotape_QueryList))
 	case proto.MessageName((*protos.Public_Cts_Deck_Download)(nil)):
-		return c.do_Public_Cts_Deck_Download(session, obj.(*protos.Public_Cts_Deck_Download))
+		return c.do_Public_Cts_Deck_Download(session, data, obj.(*protos.Public_Cts_Deck_Download))
 	case proto.MessageName((*protos.Public_Cts_Deck_Query)(nil)):
-		return c.do_Public_Cts_Deck_Query(session, obj.(*protos.Public_Cts_Deck_Query))
+		return c.do_Public_Cts_Deck_Query(session, data, obj.(*protos.Public_Cts_Deck_Query))
 	case proto.MessageName((*protos.Public_Cts_Deck_Remove)(nil)):
-		return c.do_Public_Cts_Deck_Remove(session, obj.(*protos.Public_Cts_Deck_Remove))
+		return c.do_Public_Cts_Deck_Remove(session, data, obj.(*protos.Public_Cts_Deck_Remove))
 	case proto.MessageName((*protos.Public_Cts_Deck_Upload)(nil)):
-		return c.do_Public_Cts_Deck_Upload(session, obj.(*protos.Public_Cts_Deck_Upload))
+		return c.do_Public_Cts_Deck_Upload(session, data, obj.(*protos.Public_Cts_Deck_Upload))
 	case proto.MessageName((*protos.Public_Cts_Hall_CreateRoom)(nil)):
-		return c.do_Public_Cts_Hall_CreateRoom(session, obj.(*protos.Public_Cts_Hall_CreateRoom))
+		return c.do_Public_Cts_Hall_CreateRoom(session, data, obj.(*protos.Public_Cts_Hall_CreateRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_EnterRoom)(nil)):
-		return c.do_Public_Cts_Hall_EnterRoom(session, obj.(*protos.Public_Cts_Hall_EnterRoom))
+		return c.do_Public_Cts_Hall_EnterRoom(session, data, obj.(*protos.Public_Cts_Hall_EnterRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeCamp)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeCamp(session, obj.(*protos.Public_Cts_Hall_Room_ChangeCamp))
+		return c.do_Public_Cts_Hall_Room_ChangeCamp(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeCamp))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeMaster)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeMaster(session, obj.(*protos.Public_Cts_Hall_Room_ChangeMaster))
+		return c.do_Public_Cts_Hall_Room_ChangeMaster(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeMaster))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeReady)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeReady(session, obj.(*protos.Public_Cts_Hall_Room_ChangeReady))
+		return c.do_Public_Cts_Hall_Room_ChangeReady(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeReady))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_Kick)(nil)):
-		return c.do_Public_Cts_Hall_Room_Kick(session, obj.(*protos.Public_Cts_Hall_Room_Kick))
+		return c.do_Public_Cts_Hall_Room_Kick(session, data, obj.(*protos.Public_Cts_Hall_Room_Kick))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_Leave)(nil)):
-		return c.do_Public_Cts_Hall_Room_Leave(session, obj.(*protos.Public_Cts_Hall_Room_Leave))
+		return c.do_Public_Cts_Hall_Room_Leave(session, data, obj.(*protos.Public_Cts_Hall_Room_Leave))
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_StartDuel)(nil)):
-		return c.do_Public_Cts_Hall_Room_StartDuel(session, obj.(*protos.Public_Cts_Hall_Room_StartDuel))
+		return c.do_Public_Cts_Hall_Room_StartDuel(session, data, obj.(*protos.Public_Cts_Hall_Room_StartDuel))
 	default:
 		return ErrUnknownProtoType
 	}
@@ -147,15 +147,13 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 		}
 
 		if queryOnlineResponse.State {
-			_, _, err := c.f.SendMail(queryOnlineResponse.Where, 0, "gate", session,
+			c.f.PostMail(queryOnlineResponse.Where, 1, "gate", session,
 				utils.Marshal(&protos.Internal_Kick{
 					Session: queryOnlineResponse.Session,
-				}), time.Second*6)
-			if err != nil {
-				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-				c.closer(session)
-				return
-			}
+				}))
+			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+			c.closer(session)
+			return
 		}
 
 		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
@@ -379,54 +377,143 @@ func (c *GateService) do_Public_Cts_Videotape_Get(session uint64, data []byte, o
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Videotape_QueryList(session uint64, obj *protos.Public_Cts_Videotape_QueryList) error {
+func (c *GateService) do_Public_Cts_Videotape_QueryList(session uint64, data []byte, obj *protos.Public_Cts_Videotape_QueryList) error {
+	go func() {
+		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeList{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Download(session uint64, obj *protos.Public_Cts_Deck_Download) error {
+func (c *GateService) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *protos.Public_Cts_Deck_Download) error {
+	go func() {
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Deck_DownloadResponse{
+					State: false,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Query(session uint64, obj *protos.Public_Cts_Deck_Query) error {
+func (c *GateService) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *protos.Public_Cts_Deck_Query) error {
+	go func() {
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Deck_QueryListResponse{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Remove(session uint64, obj *protos.Public_Cts_Deck_Remove) error {
+func (c *GateService) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *protos.Public_Cts_Deck_Remove) error {
+	go func() {
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Deck_RemoveResponse{
+					State: false,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Upload(session uint64, obj *protos.Public_Cts_Deck_Upload) error {
+func (c *GateService) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj *protos.Public_Cts_Deck_Upload) error {
+	go func() {
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Deck_UploadResponse{
+					State: false,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_CreateRoom(session uint64, obj *protos.Public_Cts_Hall_CreateRoom) error {
+func (c *GateService) do_Public_Cts_Hall_CreateRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_CreateRoom) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_EnterRoom(session uint64, obj *protos.Public_Cts_Hall_EnterRoom) error {
+func (c *GateService) do_Public_Cts_Hall_EnterRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_EnterRoom) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeCamp(session uint64, obj *protos.Public_Cts_Hall_Room_ChangeCamp) error {
+func (c *GateService) do_Public_Cts_Hall_Room_ChangeCamp(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeCamp) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, obj *protos.Public_Cts_Hall_Room_ChangeMaster) error {
+func (c *GateService) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeMaster) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeReady(session uint64, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
+func (c *GateService) do_Public_Cts_Hall_Room_ChangeReady(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_Kick(session uint64, obj *protos.Public_Cts_Hall_Room_Kick) error {
+func (c *GateService) do_Public_Cts_Hall_Room_Kick(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Kick) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_Leave(session uint64, obj *protos.Public_Cts_Hall_Room_Leave) error {
+func (c *GateService) do_Public_Cts_Hall_Room_Leave(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Leave) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_StartDuel(session uint64, obj *protos.Public_Cts_Hall_Room_StartDuel) error {
+func (c *GateService) do_Public_Cts_Hall_Room_StartDuel(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_StartDuel) error {
+	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }

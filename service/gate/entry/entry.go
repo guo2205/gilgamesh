@@ -99,13 +99,6 @@ func (c *GateEntry) listener(l *net.TCPListener) {
 }
 
 func (c *GateEntry) serviceConn(cc net.Conn) error {
-	//	var err error
-	//	cc, err = ssocket.NewSSocket(cc)
-	//	if err != nil {
-	//		cc.Close()
-	//		return err
-	//	}
-
 	err := utils.Handshake(cc, c.gateOption.Cookie, c.gateOption.Timeout)
 	if err != nil {
 		cc.Close()
