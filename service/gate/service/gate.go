@@ -17,7 +17,7 @@ type _Client struct {
 	Account string
 }
 
-type GateService struct {
+type Service struct {
 	fractal.DefaultServiceProvider
 	logger *mylog.Logger
 	f      *fractal.Fractal
@@ -32,8 +32,8 @@ func NewGateService(logger *mylog.Logger,
 	f *fractal.Fractal,
 	option *config.GateOption,
 	writer func(session uint64, d []byte) error,
-	closer func(session uint64)) *GateService {
-	return &GateService{
+	closer func(session uint64)) *Service {
+	return &Service{
 		logger:  logger,
 		f:       f,
 		option:  option,
@@ -43,7 +43,7 @@ func NewGateService(logger *mylog.Logger,
 	}
 }
 
-func (c *GateService) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
+func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
 	switch caller {
 	case "entry":
 		return c.doEntry(_type, session, data)

@@ -8,7 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func (c *GateService) doOther(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
+func (c *Service) doOther(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
 	switch _type {
 	case 0:
 		return []byte{}, c.writer(session, data)
@@ -25,7 +25,7 @@ func (c *GateService) doOther(caller string, _type uint32, session uint64, data 
 	return []byte{}, nil
 }
 
-func (c *GateService) do_Internal_Kick(session uint64, data []byte, obj *protos.Internal_Kick) ([]byte, error) {
+func (c *Service) do_Internal_Kick(session uint64, data []byte, obj *protos.Internal_Kick) ([]byte, error) {
 	c.closer(obj.Session)
 	return []byte{}, nil
 }

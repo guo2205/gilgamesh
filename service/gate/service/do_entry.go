@@ -14,7 +14,7 @@ var (
 	ErrUnknownProtoType error = errors.New("unknown proto type")
 )
 
-func (c *GateService) doEntry(_type uint32, session uint64, data []byte) ([]byte, error) {
+func (c *Service) doEntry(_type uint32, session uint64, data []byte) ([]byte, error) {
 	switch _type {
 	case 0:
 		return []byte{}, c.doEntryNormal(session, data)
@@ -25,7 +25,7 @@ func (c *GateService) doEntry(_type uint32, session uint64, data []byte) ([]byte
 	}
 }
 
-func (c *GateService) doEntryNormal(session uint64, data []byte) error {
+func (c *Service) doEntryNormal(session uint64, data []byte) error {
 	obj, _type, err := utils.Unmarshal(data)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 	}
 }
 
-func (c *GateService) doEntryOffline(session uint64) error {
+func (c *Service) doEntryOffline(session uint64) error {
 	client, ok := c.clients[session]
 	if ok {
 		c.f.PostMail("online@public.global", 0, "gate", session,
@@ -95,9 +95,9 @@ func (c *GateService) doEntryOffline(session uint64) error {
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
+func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
 	go func() {
-		ret, _, err := c.f.SendMail("auth@public.global", 0, "gate", session, data, time.Second*3)
+		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*3)
 		if err != nil {
 			c.closer(session)
 			return
@@ -226,7 +226,7 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetAvatar) error {
+func (c *Service) do_Public_Cts_Resource_GetAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetAvatar) error {
 	go func() {
 		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -247,7 +247,7 @@ func (c *GateService) do_Public_Cts_Resource_GetAvatar(session uint64, data []by
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_UploadAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_UploadAvatar) error {
+func (c *Service) do_Public_Cts_Resource_UploadAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_UploadAvatar) error {
 	go func() {
 		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -266,7 +266,7 @@ func (c *GateService) do_Public_Cts_Resource_UploadAvatar(session uint64, data [
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetLFList(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFList) error {
+func (c *Service) do_Public_Cts_Resource_GetLFList(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFList) error {
 	go func() {
 		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -285,7 +285,7 @@ func (c *GateService) do_Public_Cts_Resource_GetLFList(session uint64, data []by
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetLFListData(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFListData) error {
+func (c *Service) do_Public_Cts_Resource_GetLFListData(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFListData) error {
 	go func() {
 		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -304,7 +304,7 @@ func (c *GateService) do_Public_Cts_Resource_GetLFListData(session uint64, data 
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Create(session uint64, data []byte, obj *protos.Public_Cts_Player_Create) error {
+func (c *Service) do_Public_Cts_Player_Create(session uint64, data []byte, obj *protos.Public_Cts_Player_Create) error {
 	go func() {
 		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -325,7 +325,7 @@ func (c *GateService) do_Public_Cts_Player_Create(session uint64, data []byte, o
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Modify(session uint64, data []byte, obj *protos.Public_Cts_Player_Modify) error {
+func (c *Service) do_Public_Cts_Player_Modify(session uint64, data []byte, obj *protos.Public_Cts_Player_Modify) error {
 	go func() {
 		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -346,7 +346,7 @@ func (c *GateService) do_Public_Cts_Player_Modify(session uint64, data []byte, o
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Query(session uint64, data []byte, obj *protos.Public_Cts_Player_Query) error {
+func (c *Service) do_Public_Cts_Player_Query(session uint64, data []byte, obj *protos.Public_Cts_Player_Query) error {
 	go func() {
 		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -365,7 +365,7 @@ func (c *GateService) do_Public_Cts_Player_Query(session uint64, data []byte, ob
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *protos.Public_Cts_Videotape_Get) error {
+func (c *Service) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *protos.Public_Cts_Videotape_Get) error {
 	go func() {
 		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -386,7 +386,7 @@ func (c *GateService) do_Public_Cts_Videotape_Get(session uint64, data []byte, o
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Videotape_QueryList(session uint64, data []byte, obj *protos.Public_Cts_Videotape_QueryList) error {
+func (c *Service) do_Public_Cts_Videotape_QueryList(session uint64, data []byte, obj *protos.Public_Cts_Videotape_QueryList) error {
 	go func() {
 		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -405,7 +405,7 @@ func (c *GateService) do_Public_Cts_Videotape_QueryList(session uint64, data []b
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *protos.Public_Cts_Deck_Download) error {
+func (c *Service) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *protos.Public_Cts_Deck_Download) error {
 	go func() {
 		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -426,7 +426,7 @@ func (c *GateService) do_Public_Cts_Deck_Download(session uint64, data []byte, o
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *protos.Public_Cts_Deck_Query) error {
+func (c *Service) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *protos.Public_Cts_Deck_Query) error {
 	go func() {
 		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -445,7 +445,7 @@ func (c *GateService) do_Public_Cts_Deck_Query(session uint64, data []byte, obj 
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *protos.Public_Cts_Deck_Remove) error {
+func (c *Service) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *protos.Public_Cts_Deck_Remove) error {
 	go func() {
 		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -466,7 +466,7 @@ func (c *GateService) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj *protos.Public_Cts_Deck_Upload) error {
+func (c *Service) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj *protos.Public_Cts_Deck_Upload) error {
 	go func() {
 		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
 		if err != nil {
@@ -487,42 +487,42 @@ func (c *GateService) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_CreateRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_CreateRoom) error {
+func (c *Service) do_Public_Cts_Hall_CreateRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_CreateRoom) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_EnterRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_EnterRoom) error {
+func (c *Service) do_Public_Cts_Hall_EnterRoom(session uint64, data []byte, obj *protos.Public_Cts_Hall_EnterRoom) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeCamp(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeCamp) error {
+func (c *Service) do_Public_Cts_Hall_Room_ChangeCamp(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeCamp) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeMaster) error {
+func (c *Service) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeMaster) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeReady(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
+func (c *Service) do_Public_Cts_Hall_Room_ChangeReady(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_Kick(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Kick) error {
+func (c *Service) do_Public_Cts_Hall_Room_Kick(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Kick) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_Leave(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Leave) error {
+func (c *Service) do_Public_Cts_Hall_Room_Leave(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Leave) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Hall_Room_StartDuel(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_StartDuel) error {
+func (c *Service) do_Public_Cts_Hall_Room_StartDuel(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_StartDuel) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }

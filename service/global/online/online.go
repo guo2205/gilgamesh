@@ -16,7 +16,7 @@ type _AccountPosition struct {
 	Session uint64
 }
 
-type OnlineService struct {
+type Service struct {
 	fractal.DefaultServiceProvider
 	logger *mylog.Logger
 	f      *fractal.Fractal
@@ -26,15 +26,15 @@ type OnlineService struct {
 
 func NewService(
 	logger *mylog.Logger,
-	f *fractal.Fractal) *OnlineService {
-	return &OnlineService{
+	f *fractal.Fractal) *Service {
+	return &Service{
 		logger:          logger,
 		f:               f,
 		accountStateMap: make(map[string]*_AccountPosition, 1000),
 	}
 }
 
-func (c *OnlineService) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
+func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
 	obj, ptype, err := utils.Unmarshal(data)
 	if err != nil {
 		return []byte{}, err
@@ -49,7 +49,7 @@ func (c *OnlineService) OnMail(caller string, _type uint32, session uint64, data
 	return []byte{}, nil
 }
 
-func (c *OnlineService) do_Internal_QueryOnline(session uint64, obj *protos.Internal_QueryOnline) ([]byte, error) {
+func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_QueryOnline) ([]byte, error) {
 	response := protos.Internal_QueryOnlineResponse{}
 
 	state, ok := c.accountStateMap[obj.Account]
@@ -64,7 +64,7 @@ func (c *OnlineService) do_Internal_QueryOnline(session uint64, obj *protos.Inte
 	return d, nil
 }
 
-func (c *OnlineService) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_SetOnline) ([]byte, error) {
+func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_SetOnline) ([]byte, error) {
 	if obj.State {
 		c.accountStateMap[obj.Account] = &_AccountPosition{
 			State:   true,

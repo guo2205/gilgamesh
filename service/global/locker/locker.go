@@ -10,7 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-type LockerService struct {
+type Service struct {
 	fractal.DefaultServiceProvider
 	logger *mylog.Logger
 	f      *fractal.Fractal
@@ -20,15 +20,15 @@ type LockerService struct {
 
 func NewService(
 	logger *mylog.Logger,
-	f *fractal.Fractal) *LockerService {
-	return &LockerService{
+	f *fractal.Fractal) *Service {
+	return &Service{
 		logger:     logger,
 		f:          f,
 		globalLock: make(map[string]bool, 10000),
 	}
 }
 
-func (c *LockerService) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
+func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
 	obj, ptype, err := utils.Unmarshal(data)
 	if err != nil {
 		return []byte{}, err
@@ -41,7 +41,7 @@ func (c *LockerService) OnMail(caller string, _type uint32, session uint64, data
 	return []byte{}, nil
 }
 
-func (c *LockerService) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_AcquireLocker) ([]byte, error) {
+func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_AcquireLocker) ([]byte, error) {
 	if obj.Lock {
 		state, ok := c.globalLock[obj.Account]
 		if !ok {
