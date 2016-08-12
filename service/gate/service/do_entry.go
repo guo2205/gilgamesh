@@ -82,6 +82,14 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 }
 
 func (c *GateService) doEntryOffline(session uint64) error {
+	client, ok := c.clients[session]
+	if ok {
+		c.f.PostMail("online@public.global", 0, "gate", session,
+			utils.Marshal(&protos.Internal_SetOnline{
+				Account: client.Account,
+				State:   false,
+			}))
+	}
 	c.closer(session)
 	delete(c.clients, session)
 	return nil
@@ -159,6 +167,7 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
 			utils.Marshal(&protos.Internal_SetOnline{
 				Account: obj.Account,
+				State:   true,
 			}), time.Second*6)
 		if err != nil {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)

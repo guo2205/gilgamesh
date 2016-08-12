@@ -469,6 +469,7 @@ message Internal{
 	// 设置在线
 	message SetOnline{
 		string Account = 1;
+		bool State = 2;
 	}
 	
 	// 查询玩家信息
