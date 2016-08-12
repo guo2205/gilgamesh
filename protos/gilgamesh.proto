@@ -228,7 +228,7 @@ message Public {
 			
 			// 录像列表
 			message VideoTapeData{
-				string Id = 1;
+				uint64 Id = 1;
 				bytes Data = 2;
 			}
 		}

@@ -49,7 +49,7 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 	case proto.MessageName((*protos.Public_Cts_Player_Query)(nil)):
 		return c.do_Public_Cts_Player_Query(session, data, obj.(*protos.Public_Cts_Player_Query))
 	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
-		return c.do_Public_Cts_Videotape_Get(session, obj.(*protos.Public_Cts_Videotape_Get))
+		return c.do_Public_Cts_Videotape_Get(session, data, obj.(*protos.Public_Cts_Videotape_Get))
 	case proto.MessageName((*protos.Public_Cts_Videotape_QueryList)(nil)):
 		return c.do_Public_Cts_Videotape_QueryList(session, obj.(*protos.Public_Cts_Videotape_QueryList))
 	case proto.MessageName((*protos.Public_Cts_Deck_Download)(nil)):
@@ -358,7 +358,24 @@ func (c *GateService) do_Public_Cts_Player_Query(session uint64, data []byte, ob
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Videotape_Get(session uint64, obj *protos.Public_Cts_Videotape_Get) error {
+func (c *GateService) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *protos.Public_Cts_Videotape_Get) error {
+	go func() {
+		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeData{
+					Id: obj.Id,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
