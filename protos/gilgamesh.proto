@@ -357,11 +357,6 @@ message Public {
 			message Modify{
 				PlayerData Player = 1;
 			}
-						
-			// 改变使用的卡组
-			message ChangeUsedeck{
-				uint64 Id = 1;
-			}
 		}
 		
 		// 录像

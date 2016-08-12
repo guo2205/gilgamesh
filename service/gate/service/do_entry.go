@@ -37,19 +37,17 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 	case proto.MessageName((*protos.Public_Cts_Resource_GetAvatar)(nil)):
 		return c.do_Public_Cts_Resource_GetAvatar(session, data, obj.(*protos.Public_Cts_Resource_GetAvatar))
 	case proto.MessageName((*protos.Public_Cts_Resource_GetLFList)(nil)):
-		return c.do_Public_Cts_Resource_GetLFList(session, obj.(*protos.Public_Cts_Resource_GetLFList))
+		return c.do_Public_Cts_Resource_GetLFList(session, data, obj.(*protos.Public_Cts_Resource_GetLFList))
 	case proto.MessageName((*protos.Public_Cts_Resource_GetLFListData)(nil)):
-		return c.do_Public_Cts_Resource_GetLFListData(session, obj.(*protos.Public_Cts_Resource_GetLFListData))
+		return c.do_Public_Cts_Resource_GetLFListData(session, data, obj.(*protos.Public_Cts_Resource_GetLFListData))
 	case proto.MessageName((*protos.Public_Cts_Resource_UploadAvatar)(nil)):
-		return c.do_Public_Cts_Resource_UploadAvatar(session, obj.(*protos.Public_Cts_Resource_UploadAvatar))
+		return c.do_Public_Cts_Resource_UploadAvatar(session, data, obj.(*protos.Public_Cts_Resource_UploadAvatar))
 	case proto.MessageName((*protos.Public_Cts_Player_Create)(nil)):
-		return c.do_Public_Cts_Player_Create(session, obj.(*protos.Public_Cts_Player_Create))
+		return c.do_Public_Cts_Player_Create(session, data, obj.(*protos.Public_Cts_Player_Create))
 	case proto.MessageName((*protos.Public_Cts_Player_Modify)(nil)):
-		return c.do_Public_Cts_Player_Modify(session, obj.(*protos.Public_Cts_Player_Modify))
+		return c.do_Public_Cts_Player_Modify(session, data, obj.(*protos.Public_Cts_Player_Modify))
 	case proto.MessageName((*protos.Public_Cts_Player_Query)(nil)):
-		return c.do_Public_Cts_Player_Query(session, obj.(*protos.Public_Cts_Player_Query))
-	case proto.MessageName((*protos.Public_Cts_Player_ChangeUsedeck)(nil)):
-		return c.do_Public_Cts_Player_ChangeUsedeck(session, obj.(*protos.Public_Cts_Player_ChangeUsedeck))
+		return c.do_Public_Cts_Player_Query(session, data, obj.(*protos.Public_Cts_Player_Query))
 	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
 		return c.do_Public_Cts_Videotape_Get(session, obj.(*protos.Public_Cts_Videotape_Get))
 	case proto.MessageName((*protos.Public_Cts_Videotape_QueryList)(nil)):
@@ -242,31 +240,121 @@ func (c *GateService) do_Public_Cts_Resource_GetAvatar(session uint64, data []by
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetLFList(session uint64, obj *protos.Public_Cts_Resource_GetLFList) error {
+func (c *GateService) do_Public_Cts_Resource_UploadAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_UploadAvatar) error {
+	go func() {
+		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Resource_UploadAvatarResponse{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_GetLFListData(session uint64, obj *protos.Public_Cts_Resource_GetLFListData) error {
+func (c *GateService) do_Public_Cts_Resource_GetLFList(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFList) error {
+	go func() {
+		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Resource_GetLFListResponse{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Resource_UploadAvatar(session uint64, obj *protos.Public_Cts_Resource_UploadAvatar) error {
+func (c *GateService) do_Public_Cts_Resource_GetLFListData(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFListData) error {
+	go func() {
+		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Resource_GetLFListDataResponse{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Create(session uint64, obj *protos.Public_Cts_Player_Create) error {
+func (c *GateService) do_Public_Cts_Player_Create(session uint64, data []byte, obj *protos.Public_Cts_Player_Create) error {
+	go func() {
+		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Player_CreateResponse{
+					State: false,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Modify(session uint64, obj *protos.Public_Cts_Player_Modify) error {
+func (c *GateService) do_Public_Cts_Player_Modify(session uint64, data []byte, obj *protos.Public_Cts_Player_Modify) error {
+	go func() {
+		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Player_ModifyResponse{
+					State: false,
+				}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
-func (c *GateService) do_Public_Cts_Player_Query(session uint64, obj *protos.Public_Cts_Player_Query) error {
-	return nil
-}
-
-func (c *GateService) do_Public_Cts_Player_ChangeUsedeck(session uint64, obj *protos.Public_Cts_Player_ChangeUsedeck) error {
+func (c *GateService) do_Public_Cts_Player_Query(session uint64, data []byte, obj *protos.Public_Cts_Player_Query) error {
+	go func() {
+		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
+		if err != nil {
+			err := c.writer(session,
+				utils.Marshal(&protos.Public_Stc_Player_QueryResponse{}))
+			if err != nil {
+				c.closer(session)
+			}
+		} else {
+			err := c.writer(session, ret)
+			if err != nil {
+				c.closer(session)
+			}
+		}
+	}()
 	return nil
 }
 
