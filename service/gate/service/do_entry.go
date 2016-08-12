@@ -88,6 +88,13 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 			return err
 		}
 		return c.do_Public_Cts_Player_Query(session, &obj)
+	case proto.MessageName((*protos.Public_Cts_Player_ChangeUsedeck)(nil)):
+		obj := protos.Public_Cts_Player_ChangeUsedeck{}
+		err := proto.Unmarshal(data, &obj)
+		if err != nil {
+			return err
+		}
+		return c.do_Public_Cts_Player_ChangeUsedeck(session, &obj)
 	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
 		obj := protos.Public_Cts_Videotape_Get{}
 		err := proto.Unmarshal(data, &obj)
@@ -165,13 +172,6 @@ func (c *GateService) doEntryNormal(session uint64, data []byte) error {
 			return err
 		}
 		return c.do_Public_Cts_Hall_Room_ChangeReady(session, &obj)
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeUsedeck)(nil)):
-		obj := protos.Public_Cts_Hall_Room_ChangeUsedeck{}
-		err := proto.Unmarshal(data, &obj)
-		if err != nil {
-			return err
-		}
-		return c.do_Public_Cts_Hall_Room_ChangeUsedeck(session, &obj)
 	case proto.MessageName((*protos.Public_Cts_Hall_Room_Kick)(nil)):
 		obj := protos.Public_Cts_Hall_Room_Kick{}
 		err := proto.Unmarshal(data, &obj)
@@ -294,13 +294,12 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 				Account: obj.Account,
 			}
 			c.clients[session] = client
-
 			go func() {
-				enterHall := protos.Internal_EnterHall{
+				queryPlayer := protos.Internal_QueryPlayer{
 					Account: obj.Account,
 				}
-				d, _ = proto.Marshal(&enterHall)
-				_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session, d, time.Second*6)
+				d, _ = proto.Marshal(&queryPlayer)
+				ret, _, err = c.f.SendMail("player@ygo.database", 0, "gate", session, d, time.Second*6)
 				if err != nil {
 					c.f.InsertEvent("gate", func() {
 						c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
@@ -308,6 +307,33 @@ func (c *GateService) do_Public_Cts_Login(session uint64, data []byte, obj *prot
 						c.closer(session)
 					})
 					return
+				}
+
+				if len(ret) == 0 {
+					needCreatePlayer := protos.Public_Stc_Player_NeedCreatePlayer{}
+					d, _ = proto.Marshal(&needCreatePlayer)
+					if err := c.writer(session, d); err != nil {
+						c.f.InsertEvent("gate", func() {
+							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+							delete(c.clients, session)
+							c.closer(session)
+						})
+						return
+					}
+				} else {
+					enterHall := protos.Internal_EnterHall{
+						Account: obj.Account,
+					}
+					d, _ = proto.Marshal(&enterHall)
+					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session, d, time.Second*6)
+					if err != nil {
+						c.f.InsertEvent("gate", func() {
+							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+							delete(c.clients, session)
+							c.closer(session)
+						})
+						return
+					}
 				}
 				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			}()
@@ -341,6 +367,10 @@ func (c *GateService) do_Public_Cts_Player_Modify(session uint64, obj *protos.Pu
 }
 
 func (c *GateService) do_Public_Cts_Player_Query(session uint64, obj *protos.Public_Cts_Player_Query) error {
+	return nil
+}
+
+func (c *GateService) do_Public_Cts_Player_ChangeUsedeck(session uint64, obj *protos.Public_Cts_Player_ChangeUsedeck) error {
 	return nil
 }
 
@@ -385,10 +415,6 @@ func (c *GateService) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, obj *
 }
 
 func (c *GateService) do_Public_Cts_Hall_Room_ChangeReady(session uint64, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
-	return nil
-}
-
-func (c *GateService) do_Public_Cts_Hall_Room_ChangeUsedeck(session uint64, obj *protos.Public_Cts_Hall_Room_ChangeUsedeck) error {
 	return nil
 }
 
