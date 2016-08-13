@@ -205,7 +205,7 @@ message Public {
 			
 			// 查询结果
 			message QueryResponse{
-				repeated Player PlayerList = 1;
+				repeated Public.Player PlayerList = 1;
 			}
 			
 			// 创建结果
@@ -350,12 +350,12 @@ message Public {
 			
 			// 创建玩家信息
 			message Create{
-				PlayerData Player = 1;
+				Public.PlayerData Player = 1;
 			}
 			
 			// 修改玩家信息
 			message Modify{
-				PlayerData Player = 1;
+				Public.PlayerData Player = 1;
 			}
 		}
 		

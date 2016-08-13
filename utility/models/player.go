@@ -17,7 +17,7 @@ type Player struct {
 	UseDeck  uint64 `xorm:"notnull"`
 }
 
-func ModifyAccountPlayer(account string, data protos.Public_PlayerData) (bool, error) {
+func ModifyAccountPlayer(account string, data *protos.Public_PlayerData) (bool, error) {
 	py := Player{
 		Account: account,
 	}
@@ -49,7 +49,7 @@ func ModifyAccountPlayer(account string, data protos.Public_PlayerData) (bool, e
 	return true, nil
 }
 
-func CreateAccountPlayer(account string, data protos.Public_PlayerData) (bool, error) {
+func CreateAccountPlayer(account string, data *protos.Public_PlayerData) (bool, error) {
 	py := Player{
 		Account: account,
 	}
