@@ -15,7 +15,7 @@ var (
 	engine *xorm.Engine
 )
 
-func Init(option config.DatabaseOption) {
+func Init(option *config.DatabaseOption) {
 	var (
 		connString string
 	)

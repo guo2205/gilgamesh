@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fractal/fractal"
 	"gilgamesh/service/global/locker"
 	"gilgamesh/service/global/online"
@@ -16,6 +17,8 @@ var (
 	logger       *mylog.Logger = mylog.NewLogger(`Global Node`, 4)
 	lockerLogger *mylog.Logger = mylog.NewLogger(`Locker Service`, 4)
 	onlineLogger *mylog.Logger = mylog.NewLogger(`Online Service`, 4)
+
+	ErrLoadConfigFailed error = errors.New("load config failed")
 )
 
 func main() {
@@ -55,11 +58,17 @@ func main() {
 }
 
 func loadConfig() (*config.NodeOption, error) {
+	var failed bool
+
 	nodeOption, err := config.LoadNodeOption("node.json")
 	if err != nil {
 		config.GenerateDefaultNodeOption("node.json")
 		logger.Error(`load node option failed, generate default option to "node.json"`)
-		return nil, err
+		failed = true
+	}
+
+	if failed {
+		return nil, ErrLoadConfigFailed
 	}
 
 	return nodeOption, nil

@@ -40,7 +40,7 @@ func LoadDatabaseOption(filename string) (*DatabaseOption, error) {
 }
 
 func GenerateDefaultDatabaseOption(filename string) error {
-	d, err := json.Marshal(generateDefaultGateOption())
+	d, err := json.Marshal(generateDefaultDatabaseOption())
 	if err != nil {
 		return err
 	}

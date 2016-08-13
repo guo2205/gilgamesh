@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fractal/fractal"
 	"gilgamesh/service/gate/entry"
 	"gilgamesh/service/gate/service"
@@ -15,6 +16,8 @@ import (
 var (
 	logger     *mylog.Logger = mylog.NewLogger(`Gate Node`, 4)
 	gateLogger *mylog.Logger = mylog.NewLogger(`Gate Service`, 4)
+
+	ErrLoadConfigFailed error = errors.New("load config failed")
 )
 
 func main() {
@@ -59,18 +62,24 @@ func main() {
 }
 
 func loadConfig() (*config.NodeOption, *config.GateOption, error) {
+	var failed bool
+
 	nodeOption, err := config.LoadNodeOption("node.json")
 	if err != nil {
 		config.GenerateDefaultNodeOption("node.json")
 		logger.Error(`load node option failed, generate default option to "node.json"`)
-		return nil, nil, err
+		failed = true
 	}
 
 	gateOption, err := config.LoadGateOption("gate.json")
 	if err != nil {
 		config.GenerateDefaultGateOption("gate.json")
 		logger.Error(`load gate option failed, generate default option to "gate.json"`)
-		return nil, nil, err
+		failed = true
+	}
+
+	if failed {
+		return nil, nil, ErrLoadConfigFailed
 	}
 
 	return nodeOption, gateOption, nil

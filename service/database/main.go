@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fractal/fractal"
 	"gilgamesh/service/database/avatar"
 	"gilgamesh/service/database/deck"
@@ -22,10 +23,12 @@ var (
 	lflistLogger    *mylog.Logger = mylog.NewLogger(`Lflist Service`, 4)
 	playerLogger    *mylog.Logger = mylog.NewLogger(`Player Service`, 4)
 	videotapeLogger *mylog.Logger = mylog.NewLogger(`Videotape Service`, 4)
+
+	ErrLoadConfigFailed error = errors.New("load config failed")
 )
 
 func main() {
-	nodeOption, err := loadConfig()
+	nodeOption, _, err := loadConfig()
 	if err != nil {
 		return
 	}
@@ -81,13 +84,26 @@ func main() {
 	}
 }
 
-func loadConfig() (*config.NodeOption, error) {
+func loadConfig() (*config.NodeOption, *config.DatabaseOption, error) {
+	var failed bool
+
 	nodeOption, err := config.LoadNodeOption("node.json")
 	if err != nil {
 		config.GenerateDefaultNodeOption("node.json")
 		logger.Error(`load node option failed, generate default option to "node.json"`)
-		return nil, err
+		failed = true
 	}
 
-	return nodeOption, nil
+	databaseOption, err := config.LoadDatabaseOption("database.json")
+	if err != nil {
+		config.GenerateDefaultDatabaseOption("database.json")
+		logger.Error(`load database option failed, generate default option to "database.json"`)
+		failed = true
+	}
+
+	if failed {
+		return nil, nil, ErrLoadConfigFailed
+	}
+
+	return nodeOption, databaseOption, nil
 }
