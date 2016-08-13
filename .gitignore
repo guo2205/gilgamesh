@@ -3,3 +3,5 @@
 *.json
 /protos/gilgamesh.pb.go
 *.dll
+*.cdb
+*.conf

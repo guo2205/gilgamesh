@@ -205,6 +205,7 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 						return
 					}
 				} else {
+					c.writer(session, ret)
 					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
 						utils.Marshal(&protos.Internal_Hall_Enter{
 							Account: obj.Account,
