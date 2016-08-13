@@ -83,7 +83,7 @@ func main() {
 	}
 	defer f.StopService("player")
 
-	err = f.NewService("videotape", videotape.NewService(videotapeLogger, f))
+	err = f.NewService("videotape", videotape.NewService(videotapeLogger, f, wdk.NewWeedSdk(resourceOption)))
 	if err != nil {
 		logger.Error("videotape service new failed :", err)
 		return

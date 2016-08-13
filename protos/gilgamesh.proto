@@ -158,7 +158,7 @@ message Public {
 		
 	// 录像
 	message VideoTape{
-		uint64 Id = 1;
+		string HashId = 1;
 		
 		string Name = 2;
 		
@@ -226,9 +226,9 @@ message Public {
 				repeated VideoTape VideoTapeList = 1;
 			}
 			
-			// 录像列表
+			// 录像数据
 			message VideoTapeData{
-				uint64 Id = 1;
+				string HashId = 1;
 				bytes Data = 2;
 			}
 		}
@@ -367,7 +367,7 @@ message Public {
 			
 			// 获取录像
 			message Get{
-				uint64 Id = 1;
+				string HashId = 1;
 			}
 		}
 		
@@ -508,7 +508,7 @@ message Internal{
 			
 			// 获取录像
 			message Get{
-				uint64 Id = 1;
+				string HashId = 1;
 				string Account = 2;
 			}
 		}

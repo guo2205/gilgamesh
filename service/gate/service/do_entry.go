@@ -397,13 +397,13 @@ func (c *Service) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *
 	}
 	go func() {
 		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Videotape_Get{
-			Id:      obj.Id,
+			HashId:  obj.HashId,
 			Account: client.Account,
 		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeData{
-					Id: obj.Id,
+					HashId: obj.HashId,
 				}))
 			if err != nil {
 				c.closer(session)
