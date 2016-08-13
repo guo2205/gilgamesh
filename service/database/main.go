@@ -10,6 +10,7 @@ import (
 	"gilgamesh/service/database/player"
 	"gilgamesh/service/database/videotape"
 	"gilgamesh/utility/config"
+	clflist "gilgamesh/utility/lflist"
 	"gilgamesh/utility/models"
 	"gilgamesh/utility/mylog"
 	wdk "gilgamesh/utility/weed-sdk"
@@ -55,14 +56,20 @@ func main() {
 	}
 	defer f.StopService("avatar")
 
-	err = f.NewService("deck", deck.NewService(deckLogger, f))
+	err = f.NewService("deck", deck.NewService(deckLogger, f, wdk.NewWeedSdk(resourceOption)))
 	if err != nil {
 		logger.Error("deck service new failed :", err)
 		return
 	}
 	defer f.StopService("deck")
 
-	err = f.NewService("lflist", lflist.NewService(lflistLogger, f))
+	lf, err := clflist.NewLFListContainer(resourceOption)
+	if err != nil {
+		logger.Error("lflist load failed :", err)
+		return
+	}
+
+	err = f.NewService("lflist", lflist.NewService(lflistLogger, f, lf))
 	if err != nil {
 		logger.Error("lflist service new failed :", err)
 		return
