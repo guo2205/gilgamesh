@@ -10,7 +10,9 @@ import (
 	"gilgamesh/service/database/player"
 	"gilgamesh/service/database/videotape"
 	"gilgamesh/utility/config"
+	"gilgamesh/utility/models"
 	"gilgamesh/utility/mylog"
+	wdk "gilgamesh/utility/weed-sdk"
 	"log"
 	"os"
 	"time"
@@ -28,10 +30,12 @@ var (
 )
 
 func main() {
-	nodeOption, _, err := loadConfig()
+	nodeOption, databaseOption, resourceOption, err := loadConfig()
 	if err != nil {
 		return
 	}
+
+	models.Init(databaseOption)
 
 	f := fractal.NewFractal()
 
@@ -44,7 +48,7 @@ func main() {
 	}
 	defer f.StopTransport()
 
-	err = f.NewService("avatar", avatar.NewService(avatarLogger, f))
+	err = f.NewService("avatar", avatar.NewService(avatarLogger, f, wdk.NewWeedSdk(resourceOption)))
 	if err != nil {
 		logger.Error("avatar service new failed :", err)
 		return
@@ -84,7 +88,7 @@ func main() {
 	}
 }
 
-func loadConfig() (*config.NodeOption, *config.DatabaseOption, error) {
+func loadConfig() (*config.NodeOption, *config.DatabaseOption, *config.ResourceOption, error) {
 	var failed bool
 
 	nodeOption, err := config.LoadNodeOption("node.json")
@@ -101,9 +105,16 @@ func loadConfig() (*config.NodeOption, *config.DatabaseOption, error) {
 		failed = true
 	}
 
-	if failed {
-		return nil, nil, ErrLoadConfigFailed
+	resourceOption, err := config.LoadResourceOption("resource.json")
+	if err != nil {
+		config.GenerateDefaultResourceOption("resource.json")
+		logger.Error(`load resource option failed, generate default option to "resource.json"`)
+		failed = true
 	}
 
-	return nodeOption, databaseOption, nil
+	if failed {
+		return nil, nil, nil, ErrLoadConfigFailed
+	}
+
+	return nodeOption, databaseOption, resourceOption, nil
 }
