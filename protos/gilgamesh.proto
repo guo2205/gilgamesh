@@ -243,7 +243,7 @@ message Public {
 			// 下载结果
 			message DownloadResponse{
 				bool State = 1;
-				Deck Deck = 2;
+				Public.Deck Deck = 2;
 			}
 			
 			// 删除结果
@@ -253,7 +253,7 @@ message Public {
 			
 			// 查询列表
 			message QueryListResponse{
-				repeated Deck DeckList = 1;
+				repeated Public.Deck DeckList = 1;
 			}
 		}
 		

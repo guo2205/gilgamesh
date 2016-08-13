@@ -2,22 +2,22 @@
 package models
 
 type Deck struct {
-	Id         int64
-	Account    string `xorm:"varchar(32) notnull"`
-	Name       string `xorm:"varchar(32) notnull"`
-	Desc       string `xorm:"varchar(128) notnull"`
-	AvatarHash string `xorm:"varchar(32) notnull"`
-	DataHash   string `xorm:"varchar(32) notnull"`
-	Created    int64  `xorm:"created notnull"`
+	Id           int64
+	Account      string `xorm:"varchar(32) notnull"`
+	Name         string `xorm:"varchar(32) notnull"`
+	Desc         string `xorm:"varchar(128) notnull"`
+	AvatarHashId string `xorm:"varchar(32) notnull"`
+	DataHashId   string `xorm:"varchar(32) notnull"`
+	Created      int64  `xorm:"created notnull"`
 }
 
-func CreateDeck(account, name, desc, avatarHash, dataHash string) error {
+func CreateDeck(account, name, desc, avatarHashId, dataHashId string) error {
 	dk := Deck{
-		Account:    account,
-		Name:       name,
-		Desc:       desc,
-		AvatarHash: avatarHash,
-		DataHash:   dataHash,
+		Account:      account,
+		Name:         name,
+		Desc:         desc,
+		AvatarHashId: avatarHashId,
+		DataHashId:   dataHashId,
 	}
 	_, err := engine.InsertOne(&dk)
 	if err != nil {
