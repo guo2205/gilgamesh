@@ -41,16 +41,16 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 	}
 
 	switch ptype {
-	case proto.MessageName((*protos.Internal_QueryOnline)(nil)):
-		return c.do_Internal_QueryOnline(session, obj.(*protos.Internal_QueryOnline))
-	case proto.MessageName((*protos.Internal_SetOnline)(nil)):
-		return c.do_Internal_SetOnline(caller, session, obj.(*protos.Internal_SetOnline))
+	case proto.MessageName((*protos.Internal_Global_Online_Query)(nil)):
+		return c.do_Internal_QueryOnline(session, obj.(*protos.Internal_Global_Online_Query))
+	case proto.MessageName((*protos.Internal_Global_Online_Set)(nil)):
+		return c.do_Internal_SetOnline(caller, session, obj.(*protos.Internal_Global_Online_Set))
 	}
 	return []byte{}, nil
 }
 
-func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_QueryOnline) ([]byte, error) {
-	response := protos.Internal_QueryOnlineResponse{}
+func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_Global_Online_Query) ([]byte, error) {
+	response := protos.Internal_Global_Online_QueryResponse{}
 
 	state, ok := c.accountStateMap[obj.Account]
 	if !ok {
@@ -64,7 +64,7 @@ func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_Q
 	return d, nil
 }
 
-func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_SetOnline) ([]byte, error) {
+func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_Global_Online_Set) ([]byte, error) {
 	if obj.State {
 		c.accountStateMap[obj.Account] = &_AccountPosition{
 			State:   true,

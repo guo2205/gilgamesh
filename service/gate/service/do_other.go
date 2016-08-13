@@ -18,14 +18,14 @@ func (c *Service) doOther(caller string, _type uint32, session uint64, data []by
 			return []byte{}, err
 		}
 		switch _type {
-		case proto.MessageName((*protos.Internal_Kick)(nil)):
-			return c.do_Internal_Kick(session, data, obj.(*protos.Internal_Kick))
+		case proto.MessageName((*protos.Internal_Gate_Kick)(nil)):
+			return c.do_Internal_Kick(session, data, obj.(*protos.Internal_Gate_Kick))
 		}
 	}
 	return []byte{}, nil
 }
 
-func (c *Service) do_Internal_Kick(session uint64, data []byte, obj *protos.Internal_Kick) ([]byte, error) {
+func (c *Service) do_Internal_Kick(session uint64, data []byte, obj *protos.Internal_Gate_Kick) ([]byte, error) {
 	c.closer(obj.Session)
 	return []byte{}, nil
 }

@@ -65,12 +65,12 @@ func (c *_ConnService) RunService() error {
 			}
 			c.entry.f.PostMail("gate", 0, "entry", c.session, ev.Data)
 			seq++
-		case <-c.ctx.Done():
-			return c.ctx.Err()
-		case <-time.After(time.Second * 5):
 			if seq > int(c.entry.gateOption.PerSecondMaxPacket*5) {
 				return ErrOverFlow
 			}
+		case <-c.ctx.Done():
+			return c.ctx.Err()
+		case <-time.After(time.Second * 5):
 			seq = 0
 		}
 	}

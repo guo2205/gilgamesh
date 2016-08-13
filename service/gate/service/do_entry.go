@@ -12,6 +12,7 @@ import (
 
 var (
 	ErrUnknownProtoType error = errors.New("unknown proto type")
+	ErrNotFoundClient   error = errors.New("not dound client")
 )
 
 func (c *Service) doEntry(_type uint32, session uint64, data []byte) ([]byte, error) {
@@ -85,12 +86,12 @@ func (c *Service) doEntryOffline(session uint64) error {
 	client, ok := c.clients[session]
 	if ok {
 		c.f.PostMail("online@public.global", 0, "gate", session,
-			utils.Marshal(&protos.Internal_SetOnline{
+			utils.Marshal(&protos.Internal_Global_Online_Set{
 				Account: client.Account,
 				State:   false,
 			}))
+		// TODO 通知大厅玩家离线
 	}
-	c.closer(session)
 	delete(c.clients, session)
 	return nil
 }
@@ -120,11 +121,11 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			return
 		}
 
-		lockData := utils.Marshal(&protos.Internal_AcquireLocker{
+		lockData := utils.Marshal(&protos.Internal_Global_Locker_Acquire{
 			Account: obj.Account,
 			Lock:    true,
 		})
-		unlockData := utils.Marshal(&protos.Internal_AcquireLocker{
+		unlockData := utils.Marshal(&protos.Internal_Global_Locker_Acquire{
 			Account: obj.Account,
 			Lock:    false,
 		})
@@ -137,7 +138,7 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 		}
 
 		ret, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
-			utils.Marshal(&protos.Internal_QueryOnline{
+			utils.Marshal(&protos.Internal_Global_Online_Query{
 				Account: obj.Account,
 			}), time.Second*12)
 		if err != nil {
@@ -146,7 +147,7 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			return
 		}
 
-		queryOnlineResponse := protos.Internal_QueryOnlineResponse{}
+		queryOnlineResponse := protos.Internal_Global_Online_QueryResponse{}
 		err = proto.Unmarshal(ret, &queryOnlineResponse)
 		if err != nil {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
@@ -156,7 +157,7 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 
 		if queryOnlineResponse.State {
 			c.f.PostMail(queryOnlineResponse.Where, 1, "gate", session,
-				utils.Marshal(&protos.Internal_Kick{
+				utils.Marshal(&protos.Internal_Gate_Kick{
 					Session: queryOnlineResponse.Session,
 				}))
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
@@ -165,7 +166,7 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 		}
 
 		_, _, err = c.f.SendMail("online@public.global", 0, "gate", session,
-			utils.Marshal(&protos.Internal_SetOnline{
+			utils.Marshal(&protos.Internal_Global_Online_Set{
 				Account: obj.Account,
 				State:   true,
 			}), time.Second*6)
@@ -183,13 +184,12 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			c.clients[session] = client
 			go func() {
 				ret, _, err = c.f.SendMail("player@ygo.database", 0, "gate", session,
-					utils.Marshal(&protos.Internal_QueryPlayer{
+					utils.Marshal(&protos.Internal_Database_Player_Query{
 						Account: obj.Account,
 					}), time.Second*6)
 				if err != nil {
 					c.f.InsertEvent("gate", func() {
 						c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-						delete(c.clients, session)
 						c.closer(session)
 					})
 					return
@@ -200,20 +200,18 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 						utils.Marshal(&protos.Public_Stc_Player_NeedCreatePlayer{})); err != nil {
 						c.f.InsertEvent("gate", func() {
 							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-							delete(c.clients, session)
 							c.closer(session)
 						})
 						return
 					}
 				} else {
 					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
-						utils.Marshal(&protos.Internal_EnterHall{
+						utils.Marshal(&protos.Internal_Hall_Enter{
 							Account: obj.Account,
 						}), time.Second*6)
 					if err != nil {
 						c.f.InsertEvent("gate", func() {
 							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-							delete(c.clients, session)
 							c.closer(session)
 						})
 						return
@@ -305,8 +303,16 @@ func (c *Service) do_Public_Cts_Resource_GetLFListData(session uint64, data []by
 }
 
 func (c *Service) do_Public_Cts_Player_Create(session uint64, data []byte, obj *protos.Public_Cts_Player_Create) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Player_Create{
+			Player:  obj.Player,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Player_CreateResponse{
@@ -319,6 +325,15 @@ func (c *Service) do_Public_Cts_Player_Create(session uint64, data []byte, obj *
 			err := c.writer(session, ret)
 			if err != nil {
 				c.closer(session)
+				return
+			}
+			_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
+				utils.Marshal(&protos.Internal_Hall_Enter{
+					Account: client.Account,
+				}), time.Second*6)
+			if err != nil {
+				c.closer(session)
+				return
 			}
 		}
 	}()
@@ -326,8 +341,16 @@ func (c *Service) do_Public_Cts_Player_Create(session uint64, data []byte, obj *
 }
 
 func (c *Service) do_Public_Cts_Player_Modify(session uint64, data []byte, obj *protos.Public_Cts_Player_Modify) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Player_Modify{
+			Player:  obj.Player,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Player_ModifyResponse{
@@ -366,8 +389,16 @@ func (c *Service) do_Public_Cts_Player_Query(session uint64, data []byte, obj *p
 }
 
 func (c *Service) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *protos.Public_Cts_Videotape_Get) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Videotape_Get{
+			Id:      obj.Id,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeData{
@@ -387,8 +418,15 @@ func (c *Service) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *
 }
 
 func (c *Service) do_Public_Cts_Videotape_QueryList(session uint64, data []byte, obj *protos.Public_Cts_Videotape_QueryList) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Videotape_QueryList{
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeList{}))
@@ -406,8 +444,16 @@ func (c *Service) do_Public_Cts_Videotape_QueryList(session uint64, data []byte,
 }
 
 func (c *Service) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *protos.Public_Cts_Deck_Download) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Download{
+			Id:      obj.Id,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Deck_DownloadResponse{
@@ -427,8 +473,15 @@ func (c *Service) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *
 }
 
 func (c *Service) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *protos.Public_Cts_Deck_Query) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Query{
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Deck_QueryListResponse{}))
@@ -446,8 +499,16 @@ func (c *Service) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *pro
 }
 
 func (c *Service) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *protos.Public_Cts_Deck_Remove) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Remove{
+			Id:      obj.Id,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Deck_RemoveResponse{
@@ -467,8 +528,16 @@ func (c *Service) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *pr
 }
 
 func (c *Service) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj *protos.Public_Cts_Deck_Upload) error {
+	client, ok := c.clients[session]
+	if !ok {
+		c.closer(session)
+		return ErrNotFoundClient
+	}
 	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, data, time.Second*6)
+		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Upload{
+			Deck:    obj.Deck,
+			Account: client.Account,
+		}), time.Second*6)
 		if err != nil {
 			err := c.writer(session,
 				utils.Marshal(&protos.Public_Stc_Deck_UploadResponse{

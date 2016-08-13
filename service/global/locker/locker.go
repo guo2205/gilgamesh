@@ -35,13 +35,13 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 	}
 
 	switch ptype {
-	case proto.MessageName((*protos.Internal_AcquireLocker)(nil)):
-		return c.do_Internal_AcquireLocker(session, obj.(*protos.Internal_AcquireLocker))
+	case proto.MessageName((*protos.Internal_Global_Locker_Acquire)(nil)):
+		return c.do_Internal_AcquireLocker(session, obj.(*protos.Internal_Global_Locker_Acquire))
 	}
 	return []byte{}, nil
 }
 
-func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_AcquireLocker) ([]byte, error) {
+func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_Global_Locker_Acquire) ([]byte, error) {
 	if obj.Lock {
 		state, ok := c.globalLock[obj.Account]
 		if !ok {

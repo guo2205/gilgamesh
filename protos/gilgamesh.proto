@@ -375,7 +375,7 @@ message Public {
 		message Deck{
 			// 上传
 			message Upload{
-				Deck Deck = 1;
+				Public.Deck Deck = 1;
 			}
 			
 			// 下载
@@ -443,47 +443,112 @@ message Public {
 }
 
 message Internal{
-	// 获取或者释放锁
-	message AcquireLocker{
-		string Account = 1;
-		bool lock = 2;
+	message Global{
+		message Locker{
+			// 获取或者释放锁
+			message Acquire{
+				string Account = 1;
+				bool lock = 2;
+			}
+		}
+		
+		message Online{
+			// 查询账户在线状态
+			message Query{
+				string Account = 1;
+			}
+	
+			// 账户状态回应
+			message QueryResponse{
+				bool State = 1;
+				string Where = 2;
+				uint64 Session = 3;
+			}
+			
+			// 设置在线
+			message Set{
+				string Account = 1;
+				bool State = 2;
+			}
+		}
 	}
 	
-	// 查询账户在线状态
-	message QueryOnline{
-		string Account = 1;
+	message Gate{
+		// 踢人
+		message Kick{
+			uint64 Session = 1;
+		}
 	}
 	
-	// 账户状态回应
-	message QueryOnlineResponse{
-		bool State = 1;
-		string Where = 2;
-		uint64 Session = 3;
+	message Database{
+		message Player{
+			// 查询玩家信息
+			message Query{
+				string Account = 1;
+			}
+			
+			// 创建玩家信息
+			message Create{
+				Public.PlayerData Player = 1;
+				string Account = 2;
+			}
+			
+			// 修改玩家信息
+			message Modify{
+				Public.PlayerData Player = 1;
+				string Account = 2;
+			}
+		}
+		
+		message Videotape{
+			// 查询当前账户录像
+			message QueryList{
+				string Account = 1;
+			}
+			
+			// 获取录像
+			message Get{
+				uint64 Id = 1;
+				string Account = 2;
+			}
+		}
+		
+		// 卡组
+		message Deck{
+			// 上传
+			message Upload{
+				Public.Deck Deck = 1;
+				string Account = 2;
+			}
+			
+			// 下载
+			message Download{
+				uint64 Id = 1;
+				string Account = 2;
+			}
+			
+			// 删除
+			message Remove{
+				uint64 Id = 1;
+				string Account = 2;
+			}
+			
+			// 查询列表
+			message Query{
+				string Account = 1;
+			}
+		}
 	}
 	
-	// 踢人
-	message Kick{
-		uint64 Session = 1;
-	}
+	message Hall{
+		// 加入大厅
+		message Enter{
+			string Account = 1;
+		}
 	
-	// 设置在线
-	message SetOnline{
-		string Account = 1;
-		bool State = 2;
-	}
-	
-	// 查询玩家信息
-	message QueryPlayer{
-		string Account = 1;
-	}
-	
-	// 加入大厅
-	message EnterHall{
-		string Account = 1;
-	}
-	
-	// 离开大厅
-	message LeaveHall{
-		string Account = 1;
+		// 离开大厅
+		message Leave{
+			string Account = 1;
+		}
 	}
 }
