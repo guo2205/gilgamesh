@@ -90,7 +90,10 @@ func (c *Service) doEntryOffline(session uint64) error {
 				Account: client.Account,
 				State:   false,
 			}))
-		// TODO 通知大厅玩家离线
+		c.f.PostMail("hall@ygo.hall", 0, "gate", session,
+			utils.Marshal(&protos.Internal_Hall_Leave{
+				Account: client.Account,
+			}))
 	}
 	delete(c.clients, session)
 	return nil

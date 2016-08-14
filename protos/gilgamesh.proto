@@ -112,14 +112,17 @@ message Public {
 	
 	// 房间状态
 	enum RoomState{
+		// 初始化中
+		Init = 0;
+		
 		// 准备中
-		Ready = 0;
+		Ready = 1;
 		
 		// 准备完成
-		ReadyCompleted = 1;
+		ReadyCompleted = 2;
 		
 		// 对战中
-		Duel = 2;
+		Duel = 3;
 	}
 	
 	// 房间对战者信息
@@ -176,12 +179,12 @@ message Public {
 		message Resource{
 			// 禁限卡表结果
 			message GetLFListResponse{
-				repeated LFList LFListList = 1;
+				repeated Public.LFList LFListList = 1;
 			}
 					
 			// 请求禁限卡表结果
 			message GetLFListDataResponse{
-				LFList LFList = 1;
+				Public.LFList LFList = 1;
 			}
 			
 			// 上传头像结果
@@ -223,7 +226,7 @@ message Public {
 		message Videotape{
 			// 录像列表
 			message VideoTapeList{
-				repeated VideoTape VideoTapeList = 1;
+				repeated Public.VideoTape VideoTapeList = 1;
 			}
 			
 			// 录像数据
@@ -262,12 +265,12 @@ message Public {
 			
 			// 房间列表
 			message RoomList{
-				repeated Room RoomList = 1;
+				repeated Public.Room RoomList = 1;
 			}
 			
 			// 房间被创建
 			message RoomCreated{
-				Room  Room = 1;
+				Public.Room  Room = 1;
 			}
 			
 			// 房间被销毁
@@ -277,7 +280,7 @@ message Public {
 			
 			// 房间状态改变
 			message RoomStateChanged{
-				Room Room = 1;
+				Public.Room Room = 1;
 			}
 			
 			// 你进入了大厅
@@ -296,12 +299,12 @@ message Public {
 				
 				// 房间状态改变
 				message RoomStateChanged{
-					Room Room = 1;
+					Public.Room Room = 1;
 				}
 				
 				// 你进入了房间
 				message YouEnterRoom{
-					Room Room = 1;
+					Public.Room Room = 1;
 				}
 				
 				// 你离开了房间
@@ -397,7 +400,7 @@ message Public {
 		message Hall{
 			// 创建房间
 			message CreateRoom{
-				RoomOption Option = 1;
+				Public.RoomOption Option = 1;
 			}
 			
 			// 加入房间
@@ -549,6 +552,25 @@ message Internal{
 		// 离开大厅
 		message Leave{
 			string Account = 1;
+		}
+		
+		// 创建房间
+		message CreateRoom{
+			string Account = 1;
+			Public.RoomOption Option = 2;
+		}
+			
+		// 加入房间
+		message EnterRoom{
+			string Account = 1;
+			string RoomPassword = 2;
+		}
+		
+		message Room{
+			// 房间初始化完毕
+			message RoomInitlized{
+				uint64 Id = 1;
+			}
 		}
 	}
 }
