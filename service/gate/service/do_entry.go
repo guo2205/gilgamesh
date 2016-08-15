@@ -100,6 +100,7 @@ func (c *Service) doEntryOffline(session uint64) error {
 }
 
 func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
+	c.logger.Debug("login :", *obj)
 	go func() {
 		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*3)
 		if err != nil {

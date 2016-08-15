@@ -40,17 +40,17 @@ func Unmarshal(d []byte) (proto.Message, string, error) {
 
 	t := proto.MessageType(f.Type)
 	if t == nil {
-		return nil, "", ErrUnknownProtobufType
+		return nil, f.Type, ErrUnknownProtobufType
 	}
-	val := reflect.New(t)
+	val := reflect.New(t.Elem())
 	obj, ok := val.Interface().(proto.Message)
 	if !ok {
-		return nil, "", ErrUnknownProtobufType
+		return nil, f.Type, ErrUnknownProtobufType
 	}
 
 	err = proto.Unmarshal(f.Data, obj)
 	if err != nil {
-		return nil, "", err
+		return nil, f.Type, err
 	}
 
 	return obj, f.Type, nil
