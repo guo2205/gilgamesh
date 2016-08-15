@@ -55,3 +55,22 @@ func Unmarshal(d []byte) (proto.Message, string, error) {
 
 	return obj, f.Type, nil
 }
+
+func UnmarshalWithType(d []byte, m proto.Message) (proto.Message, string, error) {
+	f := protos.Gilgamesh{}
+	err := proto.Unmarshal(d, &f)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if f.Type != proto.MessageName(m) {
+		return nil, f.Type, ErrUnknownProtobufType
+	}
+
+	err = proto.Unmarshal(f.Data, m)
+	if err != nil {
+		return nil, f.Type, err
+	}
+
+	return m, f.Type, nil
+}
