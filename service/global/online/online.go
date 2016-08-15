@@ -60,8 +60,7 @@ func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_G
 		response.Where = state.Where
 		response.Session = state.Session
 	}
-	d, _ := proto.Marshal(&response)
-	return d, nil
+	return utils.Marshal(&response), nil
 }
 
 func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_Global_Online_Set) ([]byte, error) {
@@ -71,8 +70,10 @@ func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *prot
 			Where:   caller,
 			Session: session,
 		}
+		c.logger.Info("account ", obj.Account, "online")
 	} else {
 		delete(c.accountStateMap, obj.Account)
+		c.logger.Info("account ", obj.Account, "offline")
 	}
 	return []byte{}, nil
 }

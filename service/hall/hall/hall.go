@@ -8,7 +8,7 @@ import (
 	"gilgamesh/protos"
 	"gilgamesh/utility/mylog"
 	"gilgamesh/utility/utils"
-	"os/exec"
+	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -135,6 +135,9 @@ func (c *Service) do_Internal_Hall_Room_RoomInitlized(caller string, session uin
 	if !ok {
 		return []byte{}, ErrNotFoundClient
 	}
+
+	c.logger.Debug("room initlized :", obj.Id, caller, client.Account)
+
 	room.Where = caller
 	client.RoomWhere = caller
 	c.f.PostMail(caller, 0, "hall", session, utils.Marshal(&protos.Internal_Hall_CreateRoom{
@@ -154,7 +157,11 @@ func (c *Service) do_Public_Cts_Hall_CreateRoom(session uint64, obj *protos.Publ
 			State:  protos.Public_Init,
 		},
 	}
-	exec.Command("room.exe", fmt.Sprint(session), fmt.Sprint(id)).Start()
+
+	c.logger.Debug("create room :", id, *obj.Option)
+
+	//exec.Command("room.exe", fmt.Sprint(session), fmt.Sprint(id)).Start()
+	ioutil.WriteFile(`args.txt`, []byte(fmt.Sprintf(`%d %d`, session, id)), 777)
 	return []byte{}, nil
 }
 
@@ -167,6 +174,9 @@ func (c *Service) do_Public_Cts_Hall_EnterRoom(session uint64, obj *protos.Publi
 	if !ok {
 		return []byte{}, ErrNotFoundClient
 	}
+
+	c.logger.Debug("enter room :", obj.Id, room.Room.Option.Name, client.Account)
+
 	client.RoomWhere = room.Where
 	c.f.PostMail(room.Where, 0, "hall", session, utils.Marshal(&protos.Internal_Hall_EnterRoom{
 		Account:      client.Account,
@@ -250,10 +260,14 @@ func (c *Service) do_Public_Stc_Hall_RoomCreated(session uint64, data []byte, ob
 	if !ok {
 		return []byte{}, nil
 	}
+
 	room.Room = obj.Room
 	for s, v := range c.clients {
 		c.f.PostMail(v.Where, 0, "hall", s, data)
 	}
+
+	c.logger.Debug("room created :", obj.Room.Id, room.Room.Option.Name)
+
 	return []byte{}, nil
 }
 
@@ -266,6 +280,9 @@ func (c *Service) do_Public_Stc_Hall_RoomDestoried(session uint64, data []byte, 
 	for s, v := range c.clients {
 		c.f.PostMail(v.Where, 0, "hall", s, data)
 	}
+
+	c.logger.Debug("room destoried :", obj.Id)
+
 	return []byte{}, nil
 }
 
@@ -278,5 +295,8 @@ func (c *Service) do_Public_Stc_Hall_RoomStateChanged(session uint64, data []byt
 	for s, v := range c.clients {
 		c.f.PostMail(v.Where, 0, "hall", s, data)
 	}
+
+	c.logger.Debug("room state changed :", obj.Room.Id)
+
 	return []byte{}, nil
 }

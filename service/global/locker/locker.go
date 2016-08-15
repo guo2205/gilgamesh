@@ -42,10 +42,15 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 }
 
 func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_Global_Locker_Acquire) ([]byte, error) {
+	c.logger.Debug("account ", obj.Account, "lock req :", obj.Lock)
+
 	if obj.Lock {
 		state, ok := c.globalLock[obj.Account]
 		if !ok {
 			c.globalLock[obj.Account] = true
+
+			c.logger.Info("account ", obj.Account, "lock")
+
 			return []byte("success"), nil
 		}
 
@@ -53,6 +58,9 @@ func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal
 			return []byte("failed"), nil
 		} else {
 			c.globalLock[obj.Account] = true
+
+			c.logger.Info("account ", obj.Account, "lock")
+
 			return []byte("success"), nil
 		}
 	} else {
@@ -64,6 +72,9 @@ func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal
 			return []byte("failed"), nil
 		} else {
 			c.globalLock[obj.Account] = false
+
+			c.logger.Info("account ", obj.Account, "unlock")
+
 			return []byte("success"), nil
 		}
 	}

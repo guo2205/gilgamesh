@@ -107,12 +107,12 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			c.closer(session)
 			return
 		}
-		loginResponse := protos.Public_Stc_LoginResponse{}
-		err = proto.Unmarshal(ret, &loginResponse)
+		uret, _, err := utils.UnmarshalWithType(ret, new(protos.Public_Stc_LoginResponse))
 		if err != nil {
 			c.closer(session)
 			return
 		}
+		loginResponse := uret.(*protos.Public_Stc_LoginResponse)
 
 		err = c.writer(session, ret)
 		if err != nil {
@@ -151,13 +151,13 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			return
 		}
 
-		queryOnlineResponse := protos.Internal_Global_Online_QueryResponse{}
-		err = proto.Unmarshal(ret, &queryOnlineResponse)
+		uret, _, err = utils.UnmarshalWithType(ret, new(protos.Internal_Global_Online_QueryResponse))
 		if err != nil {
 			c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			c.closer(session)
 			return
 		}
+		queryOnlineResponse := uret.(*protos.Internal_Global_Online_QueryResponse)
 
 		if queryOnlineResponse.State {
 			c.f.PostMail(queryOnlineResponse.Where, 1, "gate", session,
