@@ -64,7 +64,7 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 	case proto.MessageName((*protos.Internal_Hall_Enter)(nil)):
 		return c.do_Internal_Hall_Enter(caller, session, obj.(*protos.Internal_Hall_Enter))
 	case proto.MessageName((*protos.Internal_Hall_Leave)(nil)):
-		return c.do_Internal_Hall_Leave(session, obj.(*protos.Internal_Hall_Leave))
+		return c.do_Internal_Hall_Leave(caller, session, obj.(*protos.Internal_Hall_Leave))
 	case proto.MessageName((*protos.Internal_Hall_Room_RoomInitlized)(nil)):
 		return c.do_Internal_Hall_Room_RoomInitlized(caller, session, obj.(*protos.Internal_Hall_Room_RoomInitlized))
 	case proto.MessageName((*protos.Public_Cts_Hall_CreateRoom)(nil)):
@@ -99,6 +99,7 @@ func (c *Service) do_Internal_Hall_Enter(caller string, session uint64, obj *pro
 		Where:   caller,
 		Account: obj.Account,
 	}
+	c.f.PostMail(caller, 0, "hall", session, utils.Marshal(&protos.Public_Stc_Hall_YouEnterHall{}))
 	roomList := make([]*protos.Public_Room, 0, 100)
 	for _, v := range c.rooms {
 		if v.Room.State == protos.Public_Init {
@@ -112,7 +113,7 @@ func (c *Service) do_Internal_Hall_Enter(caller string, session uint64, obj *pro
 	return []byte{}, nil
 }
 
-func (c *Service) do_Internal_Hall_Leave(session uint64, obj *protos.Internal_Hall_Leave) ([]byte, error) {
+func (c *Service) do_Internal_Hall_Leave(caller string, session uint64, obj *protos.Internal_Hall_Leave) ([]byte, error) {
 	client, ok := c.clients[session]
 	if ok {
 		if client.RoomWhere != "" {
@@ -121,6 +122,7 @@ func (c *Service) do_Internal_Hall_Leave(session uint64, obj *protos.Internal_Ha
 			delete(c.clients, session)
 		}
 	}
+	c.f.PostMail(caller, 0, "hall", session, utils.Marshal(&protos.Public_Stc_Hall_YouLeaveHall{}))
 	return []byte{}, nil
 }
 
