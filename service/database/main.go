@@ -12,20 +12,21 @@ import (
 	"gilgamesh/utility/config"
 	clflist "gilgamesh/utility/lflist"
 	"gilgamesh/utility/models"
-	"gilgamesh/utility/mylog"
 	wdk "gilgamesh/utility/weed-sdk"
 	"log"
 	"os"
 	"time"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger          *mylog.Logger = mylog.NewLogger(`Database Node`, 4)
-	avatarLogger    *mylog.Logger = mylog.NewLogger(`Avatar Service`, 4)
-	deckLogger      *mylog.Logger = mylog.NewLogger(`Deck Service`, 4)
-	lflistLogger    *mylog.Logger = mylog.NewLogger(`Lflist Service`, 4)
-	playerLogger    *mylog.Logger = mylog.NewLogger(`Player Service`, 4)
-	videotapeLogger *mylog.Logger = mylog.NewLogger(`Videotape Service`, 4)
+	logger          mylog.Logger = mylog.NewLogger(`Database Node`, 4, log.LstdFlags)
+	avatarLogger    mylog.Logger = mylog.NewLogger(`Avatar Service`, 4, log.LstdFlags)
+	deckLogger      mylog.Logger = mylog.NewLogger(`Deck Service`, 4, log.LstdFlags)
+	lflistLogger    mylog.Logger = mylog.NewLogger(`Lflist Service`, 4, log.LstdFlags)
+	playerLogger    mylog.Logger = mylog.NewLogger(`Player Service`, 4, log.LstdFlags)
+	videotapeLogger mylog.Logger = mylog.NewLogger(`Videotape Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )

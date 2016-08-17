@@ -4,20 +4,20 @@ package player
 import (
 	"fractal/fractal"
 	"gilgamesh/protos"
-	"gilgamesh/utility/mylog"
 	"gilgamesh/utility/utils"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/liuhanlcj/mylog"
 )
 
 type Service struct {
 	fractal.DefaultServiceProvider
-	logger *mylog.Logger
+	logger mylog.Logger
 	f      *fractal.Fractal
 }
 
 func NewService(
-	logger *mylog.Logger,
+	logger mylog.Logger,
 	f *fractal.Fractal) *Service {
 	return &Service{
 		logger: logger,

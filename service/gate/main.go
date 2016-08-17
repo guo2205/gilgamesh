@@ -7,15 +7,16 @@ import (
 	"gilgamesh/service/gate/entry"
 	"gilgamesh/service/gate/service"
 	"gilgamesh/utility/config"
-	"gilgamesh/utility/mylog"
 	"log"
 	"os"
 	"time"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger     *mylog.Logger = mylog.NewLogger(`Gate Node`, 4)
-	gateLogger *mylog.Logger = mylog.NewLogger(`Gate Service`, 4)
+	logger     mylog.Logger = mylog.NewLogger(`Gate Node`, 4, log.LstdFlags)
+	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )

@@ -290,28 +290,11 @@ message Public {
 			// 你离开了大厅
 			message YouLeaveHall{
 			}
-			
-			// 房间消息
-			message Room{
-				// 你被请出房间
-				message YouBeKick{
-				}
-				
-				// 房间状态改变
-				message RoomStateChanged{
-					Public.Room Room = 1;
-				}
-				
-				// 你进入了房间
-				message YouEnterRoom{
-					Public.Room Room = 1;
-				}
-				
-				// 你离开了房间
-				message YouLeaveRoom{
-				}
-				
-			}
+		}
+		
+		// 对战
+		message Duel{
+			bytes Data = 1;
 		}
 	}
 	
@@ -410,37 +393,11 @@ message Public {
 				
 				string Password = 2;
 			}
-			
-			// 房间消息
-			message Room{
-				// 开始决斗
-				message StartDuel{
-				}
-				
-				// 踢人
-				message Kick{
-					string Account = 1;
-				}
-				
-				// 变更房主
-				message ChangeMaster{
-					string Account = 1;
-				}
-				
-				// 改变准备状态
-				message ChangeReady{
-					bool Ready = 1;
-				}
-				
-				// 改变阵营
-				message ChangeCamp{
-					uint32 Camp = 1;
-				}			
-				
-				// 离开房间
-				message Leave{
-				}
-			}
+		}
+		
+		// 对战
+		message Duel{
+			bytes Data = 1;
 		}
 	}
 }
@@ -570,6 +527,12 @@ message Internal{
 			// 房间初始化完毕
 			message RoomInitlized{
 				uint64 Id = 1;
+			}
+			
+			message PlayerOffline{
+			}
+			
+			message PlayerLeave{
 			}
 		}
 	}

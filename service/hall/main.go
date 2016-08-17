@@ -6,15 +6,16 @@ import (
 	"fractal/fractal"
 	"gilgamesh/service/hall/hall"
 	"gilgamesh/utility/config"
-	"gilgamesh/utility/mylog"
 	"log"
 	"os"
 	"time"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger     *mylog.Logger = mylog.NewLogger(`Hall Node`, 4)
-	hallLogger *mylog.Logger = mylog.NewLogger(`Hall Service`, 4)
+	logger     mylog.Logger = mylog.NewLogger(`Hall Node`, 4, log.LstdFlags)
+	hallLogger mylog.Logger = mylog.NewLogger(`Hall Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )

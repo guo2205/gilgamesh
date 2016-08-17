@@ -29,6 +29,7 @@ func (c *Service) doEntry(_type uint32, session uint64, data []byte) ([]byte, er
 func (c *Service) doEntryNormal(session uint64, data []byte) error {
 	obj, _type, err := utils.Unmarshal(data)
 	if err != nil {
+		c.logger.Debug("doEntryNormal failed:", err)
 		return err
 	}
 
@@ -65,18 +66,8 @@ func (c *Service) doEntryNormal(session uint64, data []byte) error {
 		return c.do_Public_Cts_Hall_CreateRoom(session, data, obj.(*protos.Public_Cts_Hall_CreateRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_EnterRoom)(nil)):
 		return c.do_Public_Cts_Hall_EnterRoom(session, data, obj.(*protos.Public_Cts_Hall_EnterRoom))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeCamp)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeCamp(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeCamp))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeMaster)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeMaster(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeMaster))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_ChangeReady)(nil)):
-		return c.do_Public_Cts_Hall_Room_ChangeReady(session, data, obj.(*protos.Public_Cts_Hall_Room_ChangeReady))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_Kick)(nil)):
-		return c.do_Public_Cts_Hall_Room_Kick(session, data, obj.(*protos.Public_Cts_Hall_Room_Kick))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_Leave)(nil)):
-		return c.do_Public_Cts_Hall_Room_Leave(session, data, obj.(*protos.Public_Cts_Hall_Room_Leave))
-	case proto.MessageName((*protos.Public_Cts_Hall_Room_StartDuel)(nil)):
-		return c.do_Public_Cts_Hall_Room_StartDuel(session, data, obj.(*protos.Public_Cts_Hall_Room_StartDuel))
+	case proto.MessageName((*protos.Public_Cts_Duel)(nil)):
+		return c.do_Public_Cts_Duel(session, data, obj.(*protos.Public_Cts_Duel))
 	default:
 		return ErrUnknownProtoType
 	}
@@ -102,7 +93,7 @@ func (c *Service) doEntryOffline(session uint64) error {
 func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.Public_Cts_Login) error {
 	c.logger.Debug("login :", *obj)
 	go func() {
-		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*3)
+		ret, _, err := c.f.SendMail("auth@public.auth", 0, "gate", session, data, time.Second*8)
 		if err != nil {
 			c.closer(session)
 			return
@@ -571,32 +562,7 @@ func (c *Service) do_Public_Cts_Hall_EnterRoom(session uint64, data []byte, obj 
 	return nil
 }
 
-func (c *Service) do_Public_Cts_Hall_Room_ChangeCamp(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeCamp) error {
-	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Hall_Room_ChangeMaster(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeMaster) error {
-	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Hall_Room_ChangeReady(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_ChangeReady) error {
-	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Hall_Room_Kick(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Kick) error {
-	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Hall_Room_Leave(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_Leave) error {
-	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Hall_Room_StartDuel(session uint64, data []byte, obj *protos.Public_Cts_Hall_Room_StartDuel) error {
+func (c *Service) do_Public_Cts_Duel(session uint64, data []byte, obj *protos.Public_Cts_Duel) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
 	return nil
 }

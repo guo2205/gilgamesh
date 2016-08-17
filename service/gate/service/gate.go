@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fractal/fractal"
 	"gilgamesh/utility/config"
-	"gilgamesh/utility/mylog"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
@@ -19,7 +20,7 @@ type _Client struct {
 
 type Service struct {
 	fractal.DefaultServiceProvider
-	logger *mylog.Logger
+	logger mylog.Logger
 	f      *fractal.Fractal
 	option *config.GateOption
 	writer func(session uint64, d []byte) error
@@ -28,7 +29,7 @@ type Service struct {
 	clients map[uint64]*_Client
 }
 
-func NewGateService(logger *mylog.Logger,
+func NewGateService(logger mylog.Logger,
 	f *fractal.Fractal,
 	option *config.GateOption,
 	writer func(session uint64, d []byte) error,

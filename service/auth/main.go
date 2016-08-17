@@ -7,15 +7,16 @@ import (
 	"gilgamesh/service/auth/auth"
 	"gilgamesh/utility/config"
 	"gilgamesh/utility/models"
-	"gilgamesh/utility/mylog"
 	"log"
 	"os"
 	"time"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger     *mylog.Logger = mylog.NewLogger(`Auth Node`, 4)
-	authLogger *mylog.Logger = mylog.NewLogger(`Auth Service`, 4)
+	logger     mylog.Logger = mylog.NewLogger(`Auth Node`, 4, log.LstdFlags)
+	authLogger mylog.Logger = mylog.NewLogger(`Auth Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )

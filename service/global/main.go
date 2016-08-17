@@ -7,16 +7,17 @@ import (
 	"gilgamesh/service/global/locker"
 	"gilgamesh/service/global/online"
 	"gilgamesh/utility/config"
-	"gilgamesh/utility/mylog"
 	"log"
 	"os"
 	"time"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger       *mylog.Logger = mylog.NewLogger(`Global Node`, 4)
-	lockerLogger *mylog.Logger = mylog.NewLogger(`Locker Service`, 4)
-	onlineLogger *mylog.Logger = mylog.NewLogger(`Online Service`, 4)
+	logger       mylog.Logger = mylog.NewLogger(`Global Node`, 4, log.LstdFlags)
+	lockerLogger mylog.Logger = mylog.NewLogger(`Locker Service`, 4, log.LstdFlags)
+	onlineLogger mylog.Logger = mylog.NewLogger(`Online Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
