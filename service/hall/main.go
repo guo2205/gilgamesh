@@ -21,7 +21,7 @@ var (
 )
 
 func main() {
-	nodeOption, err := loadConfig()
+	nodeOption, hallOption, err := loadConfig()
 	if err != nil {
 		return
 	}
@@ -37,7 +37,7 @@ func main() {
 	}
 	defer f.StopTransport()
 
-	err = f.NewService("hall", hall.NewService(hallLogger, f))
+	err = f.NewService("hall", hall.NewService(hallLogger, f, hallOption))
 	if err != nil {
 		logger.Error("hall service new failed :", err)
 		return
@@ -49,7 +49,7 @@ func main() {
 	}
 }
 
-func loadConfig() (*config.NodeOption, error) {
+func loadConfig() (*config.NodeOption, *config.HallOption, error) {
 	var failed bool
 
 	nodeOption, err := config.LoadNodeOption("node.json")
@@ -59,9 +59,16 @@ func loadConfig() (*config.NodeOption, error) {
 		failed = true
 	}
 
-	if failed {
-		return nil, ErrLoadConfigFailed
+	hallOption, err := config.LoadHallOption("hall.json")
+	if err != nil {
+		config.GenerateDefaultHallOption("hall.json")
+		logger.Error(`load hall option failed, generate default option to "hall.json"`)
+		failed = true
 	}
 
-	return nodeOption, nil
+	if failed {
+		return nil, nil, ErrLoadConfigFailed
+	}
+
+	return nodeOption, hallOption, nil
 }
