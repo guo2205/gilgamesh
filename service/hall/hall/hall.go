@@ -72,21 +72,18 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 	}
 
 	switch ptype {
-	case proto.MessageName((*protos.Internal_Hall_Enter)(nil)):
-		return c.do_Internal_Hall_Enter(caller, session, obj.(*protos.Internal_Hall_Enter))
-	case proto.MessageName((*protos.Internal_Hall_Leave)(nil)):
-		return c.do_Internal_Hall_Leave(caller, session, obj.(*protos.Internal_Hall_Leave))
 	case proto.MessageName((*protos.Public_Cts_Hall_CreateRoom)(nil)):
 		return c.do_Public_Cts_Hall_CreateRoom(session, obj.(*protos.Public_Cts_Hall_CreateRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_EnterRoom)(nil)):
 		return c.do_Public_Cts_Hall_EnterRoom(session, obj.(*protos.Public_Cts_Hall_EnterRoom))
-
-	case proto.MessageName((*protos.Public_Stc_Hall_RoomDestoried)(nil)):
-		return c.do_Public_Stc_Hall_RoomDestoried(session, data, obj.(*protos.Public_Stc_Hall_RoomDestoried))
-	case proto.MessageName((*protos.Public_Stc_Hall_RoomStateChanged)(nil)):
-		return c.do_Public_Stc_Hall_RoomStateChanged(session, data, obj.(*protos.Public_Stc_Hall_RoomStateChanged))
 	case proto.MessageName((*protos.Public_Cts_Duel)(nil)):
 		return c.do_Public_Cts_Duel(session, data, obj.(*protos.Public_Cts_Duel))
+
+	case proto.MessageName((*protos.Internal_Hall_Enter)(nil)):
+		return c.do_Internal_Hall_Enter(caller, session, obj.(*protos.Internal_Hall_Enter))
+	case proto.MessageName((*protos.Internal_Hall_Leave)(nil)):
+		return c.do_Internal_Hall_Leave(caller, session, obj.(*protos.Internal_Hall_Leave))
+
 	default:
 		return []byte{}, ErrUnknownProtoType
 	}
@@ -119,20 +116,10 @@ func (c *Service) do_Internal_Hall_Leave(caller string, session uint64, obj *pro
 			if ok {
 				room.W.Write([]byte(fmt.Sprintf("offline %d\n", session)))
 			}
-			client.RoomWhere = 0
-		} else {
-			delete(c.clients, session)
 		}
+		delete(c.clients, session)
 	}
 	c.f.PostMail(caller, 0, "hall", session, utils.Marshal(&protos.Public_Stc_Hall_YouLeaveHall{}))
-	return []byte{}, nil
-}
-
-func (c *Service) do_Internal_Hall_Room_PlayerLeave(caller string, session uint64, obj *protos.Internal_Hall_Room_PlayerLeave) ([]byte, error) {
-	client, ok := c.clients[session]
-	if ok {
-		client.RoomWhere = 0
-	}
 	return []byte{}, nil
 }
 
@@ -169,102 +156,15 @@ func (c *Service) do_Public_Cts_Hall_CreateRoom(session uint64, obj *protos.Publ
 		W: w,
 	}
 
+	go c.service_Room(r, id)
+
 	err = cmd.Start()
 	if err != nil {
 		c.logger.Debug("start room failed :", err)
 		return []byte{}, nil
 	}
 
-	go func() {
-		rb := bufio.NewReader(r)
-		shutdown := false
-		for {
-			line, err := rb.ReadString('\n')
-			if err != nil {
-				shutdown = true
-			}
-			lines := strings.Fields(line)
-			switch len(lines) {
-			case 3:
-				if lines[0] == "out" {
-					c.f.InsertEvent("hall", func() {
-						session, err := strconv.ParseUint(lines[1], 10, 64)
-						if err != nil {
-							c.logger.Warning("room in session incorrect :", lines[1], err)
-							return
-						}
-						client, ok := c.clients[session]
-						if ok {
-							d, err := base64.StdEncoding.DecodeString(lines[2])
-							if err != nil {
-								c.logger.Warning("room in data incorrect :", lines[2], err)
-								return
-							}
-							c.logger.Debug("out", session, lines[2], d)
-							duel := protos.Public_Stc_Duel{
-								Data: d,
-							}
-							d, err = proto.Marshal(&duel)
-							if err != nil {
-								c.logger.Warning("marshal duel failed :", err)
-								return
-							}
-							obj := protos.Gilgamesh{
-								Type: proto.MessageName(&duel),
-								Data: d,
-							}
-							d, err = proto.Marshal(&obj)
-							if err != nil {
-								c.logger.Warning("marshal obj failed :", err)
-								return
-							}
-							c.f.PostMail(client.Where, 0, "hall", session, d)
-						} else {
-							c.logger.Warning("unknown session :", session)
-						}
-					})
-				} else if lines[0] == "ES_created" {
-					c.f.InsertEvent("hall", func() {
-						d, err := base64.StdEncoding.DecodeString(lines[2])
-						if err != nil {
-							return
-						}
-						rc := protos.Public_Stc_Hall_RoomCreated{}
-						err = proto.Unmarshal(d, &rc)
-						if err != nil {
-							return
-						}
-
-						room, ok := c.rooms[rc.Room.Id]
-						if !ok {
-							return
-						}
-
-						room.Room = rc.Room
-						for s, v := range c.clients {
-							c.f.PostMail(v.Where, 0, "hall", s, d)
-						}
-
-						c.logger.Debug("room created :", rc.Room.Id, rc.Room.Option.Name)
-					})
-				}
-			}
-
-			if shutdown {
-				c.f.InsertEvent("hall", func() {
-					room, ok := c.rooms[id]
-					if ok {
-						room.R.Close()
-						room.W.Close()
-						delete(c.rooms, id)
-					}
-				})
-				return
-			}
-		}
-	}()
-
-	d := utils.Marshal(&protos.Internal_Hall_CreateRoom{
+	d, _ := proto.Marshal(&protos.Internal_Hall_CreateRoom{
 		Account: client.Account,
 		Option:  obj.Option,
 	})
@@ -305,36 +205,6 @@ func (c *Service) do_Public_Cts_Hall_EnterRoom(session uint64, obj *protos.Publi
 	return []byte{}, nil
 }
 
-func (c *Service) do_Public_Stc_Hall_RoomDestoried(session uint64, data []byte, obj *protos.Public_Stc_Hall_RoomDestoried) ([]byte, error) {
-	_, ok := c.rooms[obj.Id]
-	if !ok {
-		return []byte{}, nil
-	}
-	delete(c.rooms, obj.Id)
-	for s, v := range c.clients {
-		c.f.PostMail(v.Where, 0, "hall", s, data)
-	}
-
-	c.logger.Debug("room destoried :", obj.Id)
-
-	return []byte{}, nil
-}
-
-func (c *Service) do_Public_Stc_Hall_RoomStateChanged(session uint64, data []byte, obj *protos.Public_Stc_Hall_RoomStateChanged) ([]byte, error) {
-	room, ok := c.rooms[obj.Room.Id]
-	if !ok {
-		return []byte{}, nil
-	}
-	room.Room = obj.Room
-	for s, v := range c.clients {
-		c.f.PostMail(v.Where, 0, "hall", s, data)
-	}
-
-	c.logger.Debug("room state changed :", obj.Room.Id)
-
-	return []byte{}, nil
-}
-
 func (c *Service) do_Public_Cts_Duel(session uint64, data []byte, obj *protos.Public_Cts_Duel) ([]byte, error) {
 	client, ok := c.clients[session]
 	if ok {
@@ -347,4 +217,162 @@ func (c *Service) do_Public_Cts_Duel(session uint64, data []byte, obj *protos.Pu
 		}
 	}
 	return []byte{}, nil
+}
+
+func (c *Service) service_Room(r io.ReadCloser, id uint64) {
+	rb := bufio.NewReader(r)
+	shutdown := false
+	for {
+		line, err := rb.ReadString('\n')
+		if err != nil {
+			shutdown = true
+		}
+		lines := strings.Fields(line)
+		switch len(lines) {
+		case 3:
+			if lines[0] == "out" {
+				c.f.InsertEvent("hall", func() {
+					session, err := strconv.ParseUint(lines[1], 10, 64)
+					if err != nil {
+						c.logger.Warning("room in session incorrect :", lines[1], err)
+						return
+					}
+					client, ok := c.clients[session]
+					if ok {
+						d, err := base64.StdEncoding.DecodeString(lines[2])
+						if err != nil {
+							c.logger.Warning("room in data incorrect :", lines[2], err)
+							return
+						}
+						c.logger.Debug("out", session, lines[2], d)
+						duel := protos.Public_Stc_Duel{
+							Data: d,
+						}
+						d, err = proto.Marshal(&duel)
+						if err != nil {
+							c.logger.Warning("marshal duel failed :", err)
+							return
+						}
+						obj := protos.Gilgamesh{
+							Type: proto.MessageName(&duel),
+							Data: d,
+						}
+						d, err = proto.Marshal(&obj)
+						if err != nil {
+							c.logger.Warning("marshal obj failed :", err)
+							return
+						}
+						c.f.PostMail(client.Where, 0, "hall", session, d)
+					} else {
+						c.logger.Warning("unknown session :", session)
+					}
+				})
+			} else if lines[0] == "ES_created" || lines[0] == "ES_changed" {
+				c.f.InsertEvent("hall", func() {
+					d, err := base64.StdEncoding.DecodeString(lines[2])
+					if err != nil {
+						return
+					}
+					rc := protos.Public_Stc_Hall_RoomCreated{}
+					err = proto.Unmarshal(d, &rc)
+					if err != nil {
+						return
+					}
+
+					//c.logger.Debug("room state", rc.Room)
+
+					room, ok := c.rooms[rc.Room.Id]
+					if !ok {
+						return
+					}
+
+					room.Room = rc.Room
+
+					var wb []byte
+
+					if lines[0] == "ES_created" {
+						wb = utils.Marshal(&protos.Public_Stc_Hall_RoomCreated{
+							Room: rc.Room,
+						})
+					} else {
+						wb = utils.Marshal(&protos.Public_Stc_Hall_RoomStateChanged{
+							Room: rc.Room,
+						})
+					}
+
+					for s, v := range c.clients {
+						c.f.PostMail(v.Where, 0, "hall", s, wb)
+						//c.logger.Debug("boardcast created or changed", s, v, wb)
+					}
+
+					c.logger.Debug("room created or changed :", rc.Room.Id, rc.Room.Option.Name)
+				})
+			} else if lines[0] == "ES_userexit" {
+				c.f.InsertEvent("hall", func() {
+					ss, err := strconv.ParseUint(lines[1], 10, 64)
+					if err != nil {
+						c.logger.Warning("client session incorrect :", lines[1], err)
+						return
+					}
+
+					client, ok := c.clients[ss]
+					if !ok {
+						c.logger.Warning("unknown client session :", lines[1], err)
+					} else {
+						client.RoomWhere = 0
+
+						c.logger.Debug("client exit room :", ss)
+					}
+				})
+			} else if lines[0] == "ES_ruined" {
+				c.f.InsertEvent("hall", func() {
+					sid, err := strconv.ParseUint(lines[1], 10, 64)
+					if err != nil {
+						c.logger.Warning("room id incorrect :", lines[1], err)
+						return
+					}
+
+					room, ok := c.rooms[sid]
+					if !ok {
+						c.logger.Warning("unknown room id :", lines[1], err)
+					} else {
+						delete(c.rooms, sid)
+
+						wb := utils.Marshal(&protos.Public_Stc_Hall_RoomDestoried{
+							Id: sid,
+						})
+
+						for s, v := range c.clients {
+							c.f.PostMail(v.Where, 0, "hall", s, wb)
+							//c.logger.Debug("boardcast dead", s, v, wb)
+						}
+
+						c.logger.Debug("room dead :", room.Room.Id, room.Room.Option.Name)
+					}
+				})
+			}
+		}
+
+		if shutdown {
+			c.f.InsertEvent("hall", func() {
+				room, ok := c.rooms[id]
+				if ok {
+					room.R.Close()
+					room.W.Close()
+					delete(c.rooms, id)
+
+					wb := utils.Marshal(&protos.Public_Stc_Hall_RoomDestoried{
+						Id: id,
+					})
+
+					for s, v := range c.clients {
+						c.f.PostMail(v.Where, 0, "hall", s, wb)
+						//c.logger.Debug("boardcast dead", s, v, wb)
+					}
+				}
+			})
+			return
+		}
+	}
+
 }

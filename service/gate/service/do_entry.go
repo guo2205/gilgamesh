@@ -36,38 +36,14 @@ func (c *Service) doEntryNormal(session uint64, data []byte) error {
 	switch _type {
 	case proto.MessageName((*protos.Public_Cts_Login)(nil)):
 		return c.do_Public_Cts_Login(session, data, obj.(*protos.Public_Cts_Login))
-	case proto.MessageName((*protos.Public_Cts_Resource_GetAvatar)(nil)):
-		return c.do_Public_Cts_Resource_GetAvatar(session, data, obj.(*protos.Public_Cts_Resource_GetAvatar))
-	case proto.MessageName((*protos.Public_Cts_Resource_GetLFList)(nil)):
-		return c.do_Public_Cts_Resource_GetLFList(session, data, obj.(*protos.Public_Cts_Resource_GetLFList))
-	case proto.MessageName((*protos.Public_Cts_Resource_GetLFListData)(nil)):
-		return c.do_Public_Cts_Resource_GetLFListData(session, data, obj.(*protos.Public_Cts_Resource_GetLFListData))
-	case proto.MessageName((*protos.Public_Cts_Resource_UploadAvatar)(nil)):
-		return c.do_Public_Cts_Resource_UploadAvatar(session, data, obj.(*protos.Public_Cts_Resource_UploadAvatar))
-	case proto.MessageName((*protos.Public_Cts_Player_Create)(nil)):
-		return c.do_Public_Cts_Player_Create(session, data, obj.(*protos.Public_Cts_Player_Create))
-	case proto.MessageName((*protos.Public_Cts_Player_Modify)(nil)):
-		return c.do_Public_Cts_Player_Modify(session, data, obj.(*protos.Public_Cts_Player_Modify))
-	case proto.MessageName((*protos.Public_Cts_Player_Query)(nil)):
-		return c.do_Public_Cts_Player_Query(session, data, obj.(*protos.Public_Cts_Player_Query))
-	case proto.MessageName((*protos.Public_Cts_Videotape_Get)(nil)):
-		return c.do_Public_Cts_Videotape_Get(session, data, obj.(*protos.Public_Cts_Videotape_Get))
-	case proto.MessageName((*protos.Public_Cts_Videotape_QueryList)(nil)):
-		return c.do_Public_Cts_Videotape_QueryList(session, data, obj.(*protos.Public_Cts_Videotape_QueryList))
-	case proto.MessageName((*protos.Public_Cts_Deck_Download)(nil)):
-		return c.do_Public_Cts_Deck_Download(session, data, obj.(*protos.Public_Cts_Deck_Download))
-	case proto.MessageName((*protos.Public_Cts_Deck_Query)(nil)):
-		return c.do_Public_Cts_Deck_Query(session, data, obj.(*protos.Public_Cts_Deck_Query))
-	case proto.MessageName((*protos.Public_Cts_Deck_Remove)(nil)):
-		return c.do_Public_Cts_Deck_Remove(session, data, obj.(*protos.Public_Cts_Deck_Remove))
-	case proto.MessageName((*protos.Public_Cts_Deck_Upload)(nil)):
-		return c.do_Public_Cts_Deck_Upload(session, data, obj.(*protos.Public_Cts_Deck_Upload))
 	case proto.MessageName((*protos.Public_Cts_Hall_CreateRoom)(nil)):
 		return c.do_Public_Cts_Hall_CreateRoom(session, data, obj.(*protos.Public_Cts_Hall_CreateRoom))
 	case proto.MessageName((*protos.Public_Cts_Hall_EnterRoom)(nil)):
 		return c.do_Public_Cts_Hall_EnterRoom(session, data, obj.(*protos.Public_Cts_Hall_EnterRoom))
 	case proto.MessageName((*protos.Public_Cts_Duel)(nil)):
 		return c.do_Public_Cts_Duel(session, data, obj.(*protos.Public_Cts_Duel))
+	case proto.MessageName((*protos.Public_Chat)(nil)):
+		return c.do_Public_Chat(session, data, obj.(*protos.Public_Chat))
 	default:
 		return ErrUnknownProtoType
 	}
@@ -178,376 +154,19 @@ func (c *Service) do_Public_Cts_Login(session uint64, data []byte, obj *protos.P
 			}
 			c.clients[session] = client
 			go func() {
-				ret, _, err = c.f.SendMail("player@ygo.database", 0, "gate", session,
-					utils.Marshal(&protos.Internal_Database_Player_Query{
+				_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
+					utils.Marshal(&protos.Internal_Hall_Enter{
 						Account: obj.Account,
 					}), time.Second*6)
 				if err != nil {
-					c.f.InsertEvent("gate", func() {
-						c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-						c.closer(session)
-					})
+					c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
+					c.closer(session)
 					return
 				}
 
-				if len(ret) == 0 {
-					if err := c.writer(session,
-						utils.Marshal(&protos.Public_Stc_Player_NeedCreatePlayer{})); err != nil {
-						c.f.InsertEvent("gate", func() {
-							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-							c.closer(session)
-						})
-						return
-					}
-				} else {
-					c.writer(session, ret)
-					_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
-						utils.Marshal(&protos.Internal_Hall_Enter{
-							Account: obj.Account,
-						}), time.Second*6)
-					if err != nil {
-						c.f.InsertEvent("gate", func() {
-							c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
-							c.closer(session)
-						})
-						return
-					}
-				}
 				c.f.PostMail("locker@public.global", 0, "gate", session, unlockData)
 			}()
 		})
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Resource_GetAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetAvatar) error {
-	go func() {
-		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Resource_GetAvatarResponse{
-					AvatarHashId: obj.HashId,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Resource_UploadAvatar(session uint64, data []byte, obj *protos.Public_Cts_Resource_UploadAvatar) error {
-	go func() {
-		ret, _, err := c.f.SendMail("avatar@ygo.database", 0, "gate", session, data, time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Resource_UploadAvatarResponse{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Resource_GetLFList(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFList) error {
-	go func() {
-		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Resource_GetLFListResponse{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Resource_GetLFListData(session uint64, data []byte, obj *protos.Public_Cts_Resource_GetLFListData) error {
-	go func() {
-		ret, _, err := c.f.SendMail("lflist@ygo.database", 0, "gate", session, data, time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Resource_GetLFListDataResponse{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Player_Create(session uint64, data []byte, obj *protos.Public_Cts_Player_Create) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Player_Create{
-			Player:  obj.Player,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Player_CreateResponse{
-					State: false,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-				return
-			}
-			_, _, err = c.f.SendMail("hall@ygo.hall", 0, "gate", session,
-				utils.Marshal(&protos.Internal_Hall_Enter{
-					Account: client.Account,
-				}), time.Second*6)
-			if err != nil {
-				c.closer(session)
-				return
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Player_Modify(session uint64, data []byte, obj *protos.Public_Cts_Player_Modify) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Player_Modify{
-			Player:  obj.Player,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Player_ModifyResponse{
-					State: false,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Player_Query(session uint64, data []byte, obj *protos.Public_Cts_Player_Query) error {
-	go func() {
-		ret, _, err := c.f.SendMail("player@ygo.database", 0, "gate", session, data, time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Player_QueryResponse{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Videotape_Get(session uint64, data []byte, obj *protos.Public_Cts_Videotape_Get) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Videotape_Get{
-			HashId:  obj.HashId,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeData{
-					HashId: obj.HashId,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Videotape_QueryList(session uint64, data []byte, obj *protos.Public_Cts_Videotape_QueryList) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("videotape@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Videotape_QueryList{
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Videotape_VideoTapeList{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Deck_Download(session uint64, data []byte, obj *protos.Public_Cts_Deck_Download) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Download{
-			Id:      obj.Id,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Deck_DownloadResponse{
-					State: false,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Deck_Query(session uint64, data []byte, obj *protos.Public_Cts_Deck_Query) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Query{
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Deck_QueryListResponse{}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Deck_Remove(session uint64, data []byte, obj *protos.Public_Cts_Deck_Remove) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Remove{
-			Id:      obj.Id,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Deck_RemoveResponse{
-					State: false,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
-	}()
-	return nil
-}
-
-func (c *Service) do_Public_Cts_Deck_Upload(session uint64, data []byte, obj *protos.Public_Cts_Deck_Upload) error {
-	client, ok := c.clients[session]
-	if !ok {
-		c.closer(session)
-		return ErrNotFoundClient
-	}
-	go func() {
-		ret, _, err := c.f.SendMail("deck@ygo.database", 0, "gate", session, utils.Marshal(&protos.Internal_Database_Deck_Upload{
-			Deck:    obj.Deck,
-			Account: client.Account,
-		}), time.Second*6)
-		if err != nil {
-			err := c.writer(session,
-				utils.Marshal(&protos.Public_Stc_Deck_UploadResponse{
-					State: false,
-				}))
-			if err != nil {
-				c.closer(session)
-			}
-		} else {
-			err := c.writer(session, ret)
-			if err != nil {
-				c.closer(session)
-			}
-		}
 	}()
 	return nil
 }
@@ -564,5 +183,10 @@ func (c *Service) do_Public_Cts_Hall_EnterRoom(session uint64, data []byte, obj 
 
 func (c *Service) do_Public_Cts_Duel(session uint64, data []byte, obj *protos.Public_Cts_Duel) error {
 	c.f.PostMail("hall@ygo.hall", 0, "gate", session, data)
+	return nil
+}
+
+func (c *Service) do_Public_Chat(session uint64, data []byte, obj *protos.Public_Chat) error {
+	c.f.PostMail("chat@public.global", 0, "gate", session, data)
 	return nil
 }

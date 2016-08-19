@@ -4,6 +4,7 @@ package main
 import (
 	"errors"
 	"fractal/fractal"
+	"gilgamesh/service/global/chat"
 	"gilgamesh/service/global/locker"
 	"gilgamesh/service/global/online"
 	"gilgamesh/utility/config"
@@ -18,6 +19,7 @@ var (
 	logger       mylog.Logger = mylog.NewLogger(`Global Node`, 4, log.LstdFlags)
 	lockerLogger mylog.Logger = mylog.NewLogger(`Locker Service`, 4, log.LstdFlags)
 	onlineLogger mylog.Logger = mylog.NewLogger(`Online Service`, 4, log.LstdFlags)
+	chatLogger   mylog.Logger = mylog.NewLogger(`Chat Service`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -52,6 +54,13 @@ func main() {
 		return
 	}
 	defer f.StopService("online")
+
+	err = f.NewService("chat", chat.NewService(chatLogger, f))
+	if err != nil {
+		logger.Error("chat service new failed :", err)
+		return
+	}
+	defer f.StopService("chat")
 
 	for {
 		time.Sleep(time.Hour)

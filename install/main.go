@@ -5,11 +5,13 @@ import (
 	"errors"
 	"gilgamesh/utility/config"
 	"gilgamesh/utility/models"
-	"gilgamesh/utility/mylog"
+	"log"
+
+	"github.com/liuhanlcj/mylog"
 )
 
 var (
-	logger *mylog.Logger = mylog.NewLogger(`Tools`, 4)
+	logger mylog.Logger = mylog.NewLogger(`Tools`, 4, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )

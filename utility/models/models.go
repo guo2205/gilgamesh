@@ -40,9 +40,6 @@ func Init(option *config.DatabaseOption) {
 func Install() {
 	tables := []interface{}{
 		new(Account),
-		new(Player),
-		new(Deck),
-		new(Videotape),
 	}
 
 	err := engine.DropTables(tables...)

@@ -44,7 +44,7 @@ func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byt
 	case proto.MessageName((*protos.Internal_Global_Online_Query)(nil)):
 		return c.do_Internal_QueryOnline(session, obj.(*protos.Internal_Global_Online_Query))
 	case proto.MessageName((*protos.Internal_Global_Online_Set)(nil)):
-		return c.do_Internal_SetOnline(caller, session, obj.(*protos.Internal_Global_Online_Set))
+		return c.do_Internal_SetOnline(caller, session, data, obj.(*protos.Internal_Global_Online_Set))
 	}
 	return []byte{}, nil
 }
@@ -63,7 +63,7 @@ func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_G
 	return utils.Marshal(&response), nil
 }
 
-func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *protos.Internal_Global_Online_Set) ([]byte, error) {
+func (c *Service) do_Internal_SetOnline(caller string, session uint64, data []byte, obj *protos.Internal_Global_Online_Set) ([]byte, error) {
 	if obj.State {
 		c.accountStateMap[obj.Account] = &_AccountPosition{
 			State:   true,
@@ -75,5 +75,6 @@ func (c *Service) do_Internal_SetOnline(caller string, session uint64, obj *prot
 		delete(c.accountStateMap, obj.Account)
 		c.logger.Info("account ", obj.Account, "offline")
 	}
+	c.f.PostMail("chat", 0, caller, session, data)
 	return []byte{}, nil
 }
