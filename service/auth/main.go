@@ -3,20 +3,24 @@ package main
 
 import (
 	"errors"
-	"fractal/fractal"
+	"gilgamesh/protos"
 	"gilgamesh/service/auth/auth"
 	"gilgamesh/utility/config"
 	"gilgamesh/utility/models"
 	"log"
-	"os"
 	"time"
 
+	"github.com/liuhanlcj/fractal/fractal/sdk"
 	"github.com/liuhanlcj/mylog"
 )
 
+const (
+	_DEBUG_LEVEL = 4
+)
+
 var (
-	logger     mylog.Logger = mylog.NewLogger(`Auth Node`, 4, log.LstdFlags)
-	authLogger mylog.Logger = mylog.NewLogger(`Auth Service`, 4, log.LstdFlags)
+	logger     mylog.Logger = mylog.NewLogger(`Auth Node`, _DEBUG_LEVEL, log.LstdFlags)
+	authLogger mylog.Logger = mylog.NewLogger(`Auth Service`, _DEBUG_LEVEL, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -29,18 +33,16 @@ func main() {
 
 	models.Init(databaseOption)
 
-	f := fractal.NewFractal()
+	f := fsdk.NewFractal(logger)
 
-	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
-
-	err = f.StartTransport(false, nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.auth", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartHarbour(nodeOption.LocalAddr, nodeOption.RemoteAddr, "/public/auth/?", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
-		logger.Error("start Fractal Transport failed :", err)
+		logger.Error("start Fractal Harbour failed :", err)
 		return
 	}
-	defer f.StopTransport()
+	defer f.StopHarbour()
 
-	err = f.NewService("auth", auth.NewService(authLogger, f))
+	err = f.NewService("auth", protos.New_AuthService_ServiceServer(f, auth.NewService(authLogger)))
 	if err != nil {
 		logger.Error("auth service new failed :", err)
 		return

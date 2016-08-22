@@ -2,81 +2,71 @@
 package locker
 
 import (
-	"fractal/fractal"
 	"gilgamesh/protos"
-	"gilgamesh/utility/utils"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/liuhanlcj/mylog"
 )
 
-type Service struct {
-	fractal.DefaultServiceProvider
-	logger mylog.Logger
-	f      *fractal.Fractal
+type _Locker struct {
+	Key     string
+	Session uint64
+}
 
-	globalLock map[string]bool
+type Service struct {
+	logger mylog.Logger
+
+	globalLock map[string]*_Locker
 }
 
 func NewService(
-	logger mylog.Logger,
-	f *fractal.Fractal) *Service {
+	logger mylog.Logger) *Service {
 	return &Service{
 		logger:     logger,
-		f:          f,
-		globalLock: make(map[string]bool, 10000),
+		globalLock: make(map[string]*_Locker, 10000),
 	}
 }
 
-func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
-	obj, ptype, err := utils.Unmarshal(data)
-	if err != nil {
-		return []byte{}, err
+func (c *Service) On_AcquireRequest(caller string, session uint64, in *protos.Internal_Global_Locker_AcquireRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+	_, ok := c.globalLock[in.Key]
+	if !ok {
+		c.logger.Infof("[%s %d] locked\n", in.Key, session)
+
+		c.globalLock[in.Key] = &_Locker{
+			Key:     in.Key,
+			Session: session,
+		}
+		responser(&protos.Internal_Global_Response{
+			Success: true,
+		}, nil)
+		return
 	}
 
-	switch ptype {
-	case proto.MessageName((*protos.Internal_Global_Locker_Acquire)(nil)):
-		return c.do_Internal_AcquireLocker(session, obj.(*protos.Internal_Global_Locker_Acquire))
-	}
-	return []byte{}, nil
+	responser(&protos.Internal_Global_Response{
+		Success: false,
+	}, nil)
 }
 
-func (c *Service) do_Internal_AcquireLocker(session uint64, obj *protos.Internal_Global_Locker_Acquire) ([]byte, error) {
-	c.logger.Debug("account ", obj.Account, "lock req :", obj.Lock)
-
-	if obj.Lock {
-		state, ok := c.globalLock[obj.Account]
-		if !ok {
-			c.globalLock[obj.Account] = true
-
-			c.logger.Info("account ", obj.Account, "lock")
-
-			return []byte("success"), nil
-		}
-
-		if state {
-			return []byte("failed"), nil
-		} else {
-			c.globalLock[obj.Account] = true
-
-			c.logger.Info("account ", obj.Account, "lock")
-
-			return []byte("success"), nil
-		}
-	} else {
-		state, ok := c.globalLock[obj.Account]
-		if !ok {
-			return []byte("failed"), nil
-		}
-		if !state {
-			return []byte("failed"), nil
-		} else {
-			c.globalLock[obj.Account] = false
-
-			c.logger.Info("account ", obj.Account, "unlock")
-
-			return []byte("success"), nil
-		}
+func (c *Service) On_ReleaseRequest(caller string, session uint64, in *protos.Internal_Global_Locker_ReleaseRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+	locker, ok := c.globalLock[in.Key]
+	if !ok {
+		responser(&protos.Internal_Global_Response{
+			Success: false,
+		}, nil)
+		return
 	}
 
+	if locker.Session != session {
+		responser(&protos.Internal_Global_Response{
+			Success: false,
+		}, nil)
+		return
+	}
+
+	delete(c.globalLock, in.Key)
+
+	responser(&protos.Internal_Global_Response{
+		Success: true,
+	}, nil)
+
+	c.logger.Infof("[%s %d] unlocked\n", in.Key, session)
 }

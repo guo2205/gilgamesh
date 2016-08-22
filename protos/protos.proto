@@ -1,0 +1,307 @@
+syntax = "proto3";
+
+package protos;
+
+// 公开消息
+
+// 消息装箱
+message Box {
+	string Type = 1;
+	bytes Data = 2;
+}
+
+// 公用数据
+message Common{
+// 房间模式
+	enum RoomMode{
+		// 单局
+		Single = 0;
+		
+		// 比赛
+		Match = 1;
+		
+		// 2v2
+		Tag = 2;
+	}
+	
+	// 房间规则
+	enum RoomRule{
+		// OCG模式
+		Ocg = 0;
+		
+		// TCG模式
+		Tcg = 1;
+		
+		// 混合模式
+		OcgTcg = 2;
+	}
+	
+	// 房间选项
+	message RoomOption{
+		string Name = 1;
+		string Password = 2;
+		uint32 Lp = 3;
+		uint32 HandCount = 4;
+		uint32 DrawCount = 5;
+		RoomMode Mode = 6;
+		RoomRule Rule = 7;
+		uint32 LFList = 8;
+	}
+	
+	// 房间状态
+	enum RoomState{
+		// 初始化中
+		Init = 0;
+		
+		// 准备中
+		Ready = 1;
+		
+		// 准备完成
+		ReadyCompleted = 2;
+		
+		// 对战中
+		Duel = 3;
+	}
+	
+	// 房间
+	message Room{
+		uint64 Id = 1;
+		RoomOption Option = 2;
+		repeated string Players = 3;
+		repeated string Visitors = 4;
+		RoomState State = 5;
+	}
+}
+	
+// 认证，用于需要认证的网关
+message Auth{
+	// 认证
+	message AuthRequest{
+		string Account = 1;
+		bytes Password = 2;
+	}
+
+	// 认证结果
+	message AuthResponse{
+		bool Success = 1;
+		string Reason = 2;
+	}
+}
+	
+// 聊天消息
+message Chat{
+	// 大厅聊天
+	message HallRequest{
+		string Content = 1;
+	}
+	
+	// 大厅消息
+	message Hall{
+		string Account = 1;
+		string Content = 2;
+	} 
+}
+
+// 大厅消息
+message Hall{
+	// 请求创建房间
+	message CreateRoomRequest{
+		Common.RoomOption Option = 1;
+	}
+	
+	// 请求加入房间
+	message EnterRoomRequest{
+		// 房间ID
+		uint64 Id = 1;
+		
+		// 密码
+		string Password = 2;
+	}
+	
+	// 你进入了大厅
+	message YouEnter{}
+		
+	// 你离开了大厅
+	message YouLeave{}
+	
+	// 房间列表
+	message RoomList{
+		repeated Common.Room List = 1;
+	}
+	
+	// 房间被创建
+	message RoomCreated{
+		Common.Room Room = 1;
+	}
+	
+	// 房间被销毁
+	message RoomDead{
+		uint64 Id = 1;
+	}
+	
+	// 房间状态改变
+	message RoomStateChanged{
+		Common.Room Room = 1;
+	}
+}
+
+// 对战消息
+message Duel{
+	// 传输数据
+	message DataTransfer{
+		bytes Data = 1;
+	}
+}
+
+// --------------------------------------------------------------------------
+
+// 内部消息
+
+message Null {}
+
+message Internal{
+	// 全局服务
+	message Global{
+		// 全局锁
+		message Locker{
+			// 获取锁
+			message AcquireRequest{
+				string Key = 1;
+			}
+						
+			// 释放锁
+			message ReleaseRequest{
+				string Key = 1;
+			}
+		}
+	
+		// 在线状态
+		message OnlineState{
+			// 查询状态
+			message QueryRequest{
+				string Account = 1;
+			}
+		
+			// 状态
+			message QueryResponse{
+				// 状态
+				bool State = 1;
+				
+				// 所在网关
+				string Where = 2;
+			
+				// 会话ID
+				uint64 Session = 3;
+			}
+		
+			// 设置在线
+			message SetRequest{
+				string Account = 1;
+				bool State = 2;
+			}
+		}
+		
+		// 响应
+		message Response{
+			bool Success = 1;
+		}
+	}
+		
+	// 游戏网关服务器
+	message GameGate{
+		// 入口数据
+		message EntryDataRequest{
+			bytes Data = 1;
+		}
+		
+		// 透传数据
+		message PassThroughRequest{
+			bytes Data = 1;
+		}
+		
+		// 踢人
+		message KickRequest{
+			uint64 Session = 1;
+		}
+	}
+	
+	// 大厅服务器
+	message Hall{
+		// 玩家进入
+		message EnterRequest{
+			string Account = 1;
+		}
+		
+		// 玩家离开响应
+		message LeaveResponse{
+			bool Success = 1;
+		}
+		
+		// 创建房间
+		message CreateRoomRequest{
+			Common.RoomOption Option = 1;
+		}
+		
+		// 加入房间
+		message EnterRoomRequest{
+			uint64 Id = 1;
+			string Password = 2;
+		}
+	}
+	
+	// 对战消息
+	message Duel{
+		// 传输数据
+		message DataTransfer{
+			bytes Data = 1;
+		}
+	}
+	
+	// 聊天消息
+	message Chat{
+		// 大厅聊天
+		message HallRequest{
+			string Account = 1;
+			string Content = 2;
+		}
+	}
+}
+
+// 网关服务
+service GameGateService{
+	rpc EntryDataRequest(Internal.GameGate.EntryDataRequest) returns(Null);
+	rpc PassThroughRequest(Internal.GameGate.PassThroughRequest) returns(Null);
+	rpc KickRequest(Internal.GameGate.KickRequest) returns(Null);
+	rpc MyOfflineRequest(Null) returns(Null);
+}
+
+// 认证服务
+service AuthService{
+	rpc Auth(Auth.AuthRequest) returns(Auth.AuthResponse);
+}
+
+// 全局锁服务
+service GlobalLockerService{
+	rpc AcquireRequest(Internal.Global.Locker.AcquireRequest) returns(Internal.Global.Response);
+	rpc ReleaseRequest(Internal.Global.Locker.ReleaseRequest) returns(Internal.Global.Response);
+}
+
+// 全局在线状态服务
+service GlobalOnlineStateService{
+	rpc QueryRequest(Internal.Global.OnlineState.QueryRequest) returns(Internal.Global.OnlineState.QueryResponse);
+	rpc SetRequest(Internal.Global.OnlineState.SetRequest) returns(Internal.Global.Response);
+}
+
+// 大厅服务
+service HallService{
+	rpc EnterRequest(Internal.Hall.EnterRequest) returns(Null);
+	rpc LeaveRequest(Null) returns(Internal.Hall.LeaveResponse);
+	rpc CreateRoomRequest(Internal.Hall.CreateRoomRequest) returns(Null);
+	rpc EnterRoomRequest(Internal.Hall.EnterRoomRequest) returns(Null);
+	rpc DataTransfer(Internal.Duel.DataTransfer) returns(Null);
+}
+
+// 聊天服务
+service ChatService{
+	rpc HallChat(Internal.Chat.HallRequest) returns(Null);
+}

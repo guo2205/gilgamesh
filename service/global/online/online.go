@@ -2,11 +2,8 @@
 package online
 
 import (
-	"fractal/fractal"
 	"gilgamesh/protos"
-	"gilgamesh/utility/utils"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/liuhanlcj/mylog"
 )
 
@@ -17,42 +14,23 @@ type _AccountPosition struct {
 }
 
 type Service struct {
-	fractal.DefaultServiceProvider
 	logger mylog.Logger
-	f      *fractal.Fractal
 
 	accountStateMap map[string]*_AccountPosition
 }
 
 func NewService(
-	logger mylog.Logger,
-	f *fractal.Fractal) *Service {
+	logger mylog.Logger) *Service {
 	return &Service{
 		logger:          logger,
-		f:               f,
 		accountStateMap: make(map[string]*_AccountPosition, 1000),
 	}
 }
 
-func (c *Service) OnMail(caller string, _type uint32, session uint64, data []byte) ([]byte, error) {
-	obj, ptype, err := utils.Unmarshal(data)
-	if err != nil {
-		return []byte{}, err
-	}
+func (c *Service) On_QueryRequest(caller string, session uint64, in *protos.Internal_Global_OnlineState_QueryRequest, responser func(out *protos.Internal_Global_OnlineState_QueryResponse, e error)) {
+	response := protos.Internal_Global_OnlineState_QueryResponse{}
 
-	switch ptype {
-	case proto.MessageName((*protos.Internal_Global_Online_Query)(nil)):
-		return c.do_Internal_QueryOnline(session, obj.(*protos.Internal_Global_Online_Query))
-	case proto.MessageName((*protos.Internal_Global_Online_Set)(nil)):
-		return c.do_Internal_SetOnline(caller, session, data, obj.(*protos.Internal_Global_Online_Set))
-	}
-	return []byte{}, nil
-}
-
-func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_Global_Online_Query) ([]byte, error) {
-	response := protos.Internal_Global_Online_QueryResponse{}
-
-	state, ok := c.accountStateMap[obj.Account]
+	state, ok := c.accountStateMap[in.Account]
 	if !ok {
 		response.State = false
 	} else {
@@ -60,21 +38,35 @@ func (c *Service) do_Internal_QueryOnline(session uint64, obj *protos.Internal_G
 		response.Where = state.Where
 		response.Session = state.Session
 	}
-	return utils.Marshal(&response), nil
+	responser(&response, nil)
 }
 
-func (c *Service) do_Internal_SetOnline(caller string, session uint64, data []byte, obj *protos.Internal_Global_Online_Set) ([]byte, error) {
-	if obj.State {
-		c.accountStateMap[obj.Account] = &_AccountPosition{
+func (c *Service) On_SetRequest(caller string, session uint64, in *protos.Internal_Global_OnlineState_SetRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+	if in.State {
+		_, ok := c.accountStateMap[in.Account]
+		if ok {
+			responser(&protos.Internal_Global_Response{
+				Success: false,
+			}, nil)
+			return
+		}
+
+		c.accountStateMap[in.Account] = &_AccountPosition{
 			State:   true,
 			Where:   caller,
 			Session: session,
 		}
-		c.logger.Info("account ", obj.Account, "online")
+		responser(&protos.Internal_Global_Response{
+			Success: true,
+		}, nil)
+
+		c.logger.Infof("[%s %d] online\n", in.Account, session)
 	} else {
-		delete(c.accountStateMap, obj.Account)
-		c.logger.Info("account ", obj.Account, "offline")
+		delete(c.accountStateMap, in.Account)
+		responser(&protos.Internal_Global_Response{
+			Success: true,
+		}, nil)
+
+		c.logger.Infof("[%s %d] offline\n", in.Account, session)
 	}
-	c.f.PostMail("chat", 0, caller, session, data)
-	return []byte{}, nil
 }

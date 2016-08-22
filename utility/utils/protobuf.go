@@ -19,7 +19,7 @@ func Marshal(m proto.Message) []byte {
 		panic(err)
 	}
 
-	f := protos.Gilgamesh{
+	f := protos.Box{
 		Type: proto.MessageName(m),
 		Data: d,
 	}
@@ -32,7 +32,7 @@ func Marshal(m proto.Message) []byte {
 }
 
 func Unmarshal(d []byte) (proto.Message, string, error) {
-	f := protos.Gilgamesh{}
+	f := protos.Box{}
 	err := proto.Unmarshal(d, &f)
 	if err != nil {
 		return nil, "", err
@@ -57,7 +57,7 @@ func Unmarshal(d []byte) (proto.Message, string, error) {
 }
 
 func UnmarshalWithType(d []byte, m proto.Message) (proto.Message, string, error) {
-	f := protos.Gilgamesh{}
+	f := protos.Box{}
 	err := proto.Unmarshal(d, &f)
 	if err != nil {
 		return nil, "", err

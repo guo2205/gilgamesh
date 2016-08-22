@@ -3,19 +3,23 @@ package main
 
 import (
 	"errors"
-	"fractal/fractal"
+	"gilgamesh/protos"
 	"gilgamesh/service/hall/hall"
 	"gilgamesh/utility/config"
 	"log"
-	"os"
 	"time"
 
+	"github.com/liuhanlcj/fractal/fractal/sdk"
 	"github.com/liuhanlcj/mylog"
 )
 
+const (
+	_DEBUG_LEVEL = 4
+)
+
 var (
-	logger     mylog.Logger = mylog.NewLogger(`Hall Node`, 4, log.LstdFlags)
-	hallLogger mylog.Logger = mylog.NewLogger(`Hall Service`, 4, log.LstdFlags)
+	logger     mylog.Logger = mylog.NewLogger(`Hall Node`, _DEBUG_LEVEL, log.LstdFlags)
+	hallLogger mylog.Logger = mylog.NewLogger(`Hall Service`, _DEBUG_LEVEL, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -26,18 +30,16 @@ func main() {
 		return
 	}
 
-	f := fractal.NewFractal()
+	f := fsdk.NewFractal(logger)
 
-	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
-
-	err = f.StartTransport(true, nodeOption.LocalAddr, nodeOption.RemoteAddr, "ygo.hall", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartHarbour(nodeOption.LocalAddr, nodeOption.RemoteAddr, "/ygo/hall", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
-		logger.Error("start Fractal Transport failed :", err)
+		logger.Error("start Fractal Harbour failed :", err)
 		return
 	}
-	defer f.StopTransport()
+	defer f.StopHarbour()
 
-	err = f.NewService("hall", hall.NewService(hallLogger, f, hallOption))
+	err = f.NewService("hall", protos.New_HallService_ServiceServer(f, hall.NewService(hallLogger, f, hallOption)))
 	if err != nil {
 		logger.Error("hall service new failed :", err)
 		return

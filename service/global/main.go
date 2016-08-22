@@ -3,23 +3,25 @@ package main
 
 import (
 	"errors"
-	"fractal/fractal"
-	"gilgamesh/service/global/chat"
+	"gilgamesh/protos"
 	"gilgamesh/service/global/locker"
 	"gilgamesh/service/global/online"
 	"gilgamesh/utility/config"
 	"log"
-	"os"
 	"time"
 
+	"github.com/liuhanlcj/fractal/fractal/sdk"
 	"github.com/liuhanlcj/mylog"
 )
 
+const (
+	_DEBUG_LEVEL = 4
+)
+
 var (
-	logger       mylog.Logger = mylog.NewLogger(`Global Node`, 4, log.LstdFlags)
-	lockerLogger mylog.Logger = mylog.NewLogger(`Locker Service`, 4, log.LstdFlags)
-	onlineLogger mylog.Logger = mylog.NewLogger(`Online Service`, 4, log.LstdFlags)
-	chatLogger   mylog.Logger = mylog.NewLogger(`Chat Service`, 4, log.LstdFlags)
+	logger       mylog.Logger = mylog.NewLogger(`Global Node`, _DEBUG_LEVEL, log.LstdFlags)
+	lockerLogger mylog.Logger = mylog.NewLogger(`Locker Service`, _DEBUG_LEVEL, log.LstdFlags)
+	onlineLogger mylog.Logger = mylog.NewLogger(`Online Service`, _DEBUG_LEVEL, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -30,37 +32,28 @@ func main() {
 		return
 	}
 
-	f := fractal.NewFractal()
+	f := fsdk.NewFractal(logger)
 
-	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
-
-	err = f.StartTransport(true, nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.global", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartHarbour(nodeOption.LocalAddr, nodeOption.RemoteAddr, "/public/global", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
-		logger.Error("start Fractal Transport failed :", err)
+		logger.Error("start Fractal Harbour failed :", err)
 		return
 	}
-	defer f.StopTransport()
+	defer f.StopHarbour()
 
-	err = f.NewService("locker", locker.NewService(lockerLogger, f))
+	err = f.NewService("locker", protos.New_GlobalLockerService_ServiceServer(f, locker.NewService(lockerLogger)))
 	if err != nil {
 		logger.Error("locker service new failed :", err)
 		return
 	}
 	defer f.StopService("locker")
 
-	err = f.NewService("online", online.NewService(onlineLogger, f))
+	err = f.NewService("online", protos.New_GlobalOnlineStateService_ServiceServer(f, online.NewService(onlineLogger)))
 	if err != nil {
 		logger.Error("online service new failed :", err)
 		return
 	}
 	defer f.StopService("online")
-
-	err = f.NewService("chat", chat.NewService(chatLogger, f))
-	if err != nil {
-		logger.Error("chat service new failed :", err)
-		return
-	}
-	defer f.StopService("chat")
 
 	for {
 		time.Sleep(time.Hour)

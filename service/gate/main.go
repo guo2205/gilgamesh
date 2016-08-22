@@ -3,20 +3,24 @@ package main
 
 import (
 	"errors"
-	"fractal/fractal"
+	"gilgamesh/protos"
 	"gilgamesh/service/gate/entry"
 	"gilgamesh/service/gate/service"
 	"gilgamesh/utility/config"
 	"log"
-	"os"
 	"time"
 
+	"github.com/liuhanlcj/fractal/fractal/sdk"
 	"github.com/liuhanlcj/mylog"
 )
 
+const (
+	_DEBUG_LEVEL = 4
+)
+
 var (
-	logger     mylog.Logger = mylog.NewLogger(`Gate Node`, 4, log.LstdFlags)
-	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, 4, log.LstdFlags)
+	logger     mylog.Logger = mylog.NewLogger(`Gate Node`, _DEBUG_LEVEL, log.LstdFlags)
+	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, _DEBUG_LEVEL, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -27,30 +31,38 @@ func main() {
 		return
 	}
 
-	f := fractal.NewFractal()
+	f := fsdk.NewFractal(logger)
 
-	f.SetLogger(log.New(os.Stdout, "[fractal]", log.Ltime))
-
-	err = f.StartTransport(false, nodeOption.LocalAddr, nodeOption.RemoteAddr, "public.gate", nodeOption.Cookie, nodeOption.Timeout)
+	err = f.StartHarbour(nodeOption.LocalAddr, nodeOption.RemoteAddr, "/public/gate/?", nodeOption.Cookie, nodeOption.Timeout)
 	if err != nil {
-		logger.Error("start Fractal Transport failed :", err)
+		logger.Error("start Fractal Harbour failed :", err)
 		return
 	}
-	defer f.StopTransport()
+	defer f.StopHarbour()
 
-	gateEntry := entry.NewGateEntry(f, gateOption)
+	gateEntry := entry.NewEntry(gateOption.LocalAddr,
+		f.GenerateSession,
+		func(session uint64, data []byte) error {
+			_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_EntryDataRequest("entry", session, &protos.Internal_GameGate_EntryDataRequest{
+				Data: data,
+			})
+			return err
+		},
+		&entry.Option{
+			PerSecondMaxPacket: gateOption.PerSecondMaxPacket,
+		})
 
-	gateService := service.NewGateService(gateLogger, f, gateOption,
-		gateEntry.WritePacket, gateEntry.CloseConn)
+	gateService := service.NewService(gateLogger, f, gateOption,
+		gateEntry.WriteConn, gateEntry.CloseConn)
 
-	err = f.NewService("gate", gateService)
+	err = f.NewService("gate", protos.New_GameGateService_ServiceServer(f, gateService))
 	if err != nil {
 		logger.Error("gate service new failed :", err)
 		return
 	}
 	defer f.StopService("gate")
 
-	err = gateEntry.Run()
+	err = gateEntry.Start()
 	if err != nil {
 		logger.Error("gate entry run failed :", err)
 		return

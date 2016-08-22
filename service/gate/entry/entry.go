@@ -3,81 +3,65 @@ package entry
 
 import (
 	"errors"
-	"fractal/fractal"
-	"gilgamesh/utility/config"
-	"gilgamesh/utility/socket"
-	"gilgamesh/utility/utils"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/liuhanlcj/fractal/fractal/utility/socket"
 )
 
-const (
-	_TCP_KEEPALIVE_PERIOD  = 15
-	_TCP_READ_BUFFER_SIZE  = 512
-	_TCP_WRITE_BUFFER_SIZE = 512
-)
+type SessionGenerator func() (uint64, error)
+type OnData func(uint64, []byte) error
 
 var (
-	ErrConnNotExist error = errors.New("conn session not exist")
+	ErrSessionNotExist error = errors.New("session not exist")
 )
 
 type GateEntry struct {
-	f          *fractal.Fractal
-	gateOption *config.GateOption
+	laddr            string
+	sessionGenerator SessionGenerator
+	onData           OnData
+	option           *Option
 
-	connLock sync.Mutex
-	connMap  map[uint64]*_ConnService
+	lock     sync.Mutex
+	connList map[uint64]*_Conn
 }
 
-func NewGateEntry(f *fractal.Fractal, option *config.GateOption) *GateEntry {
+func NewEntry(laddr string,
+	sessionGenerator SessionGenerator,
+	onData OnData,
+	option *Option) *GateEntry {
 	return &GateEntry{
-		f:          f,
-		gateOption: option,
-		connMap:    make(map[uint64]*_ConnService, 500),
+		laddr:            laddr,
+		sessionGenerator: sessionGenerator,
+		onData:           onData,
+		option:           option,
+		connList:         make(map[uint64]*_Conn, 1000),
 	}
 }
 
-func (c *GateEntry) Run() error {
-	l, err := c.listen()
+func (c *GateEntry) Start() error {
+	laddr, err := net.ResolveTCPAddr("tcp", c.laddr)
 	if err != nil {
 		return err
 	}
+
+	l, err := net.ListenTCP("tcp", laddr)
+	if err != nil {
+		return err
+	}
+
 	go c.listener(l)
 
 	return nil
 }
 
-func (c *GateEntry) WritePacket(session uint64, d []byte) error {
-	c.connLock.Lock()
-	defer c.connLock.Unlock()
-
-	s, ok := c.connMap[session]
-	if !ok {
-		return ErrConnNotExist
-	}
-
-	s.WritePacket(d)
-
-	return nil
+func (c *GateEntry) WriteConn(session uint64, data []byte) error {
+	return c.writeConn(session, data)
 }
 
-func (c *GateEntry) CloseConn(session uint64) {
-	c.deleteConn(session)
-}
-
-func (c *GateEntry) listen() (*net.TCPListener, error) {
-	laddr, err := net.ResolveTCPAddr("tcp", c.gateOption.LocalAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	l, err := net.ListenTCP("tcp", laddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return l, nil
+func (c *GateEntry) CloseConn(session uint64) error {
+	return c.deleteConn(session)
 }
 
 func (c *GateEntry) listener(l *net.TCPListener) {
@@ -90,44 +74,70 @@ func (c *GateEntry) listener(l *net.TCPListener) {
 		}
 
 		conn.SetKeepAlive(true)
-		conn.SetKeepAlivePeriod(time.Second * _TCP_KEEPALIVE_PERIOD)
-		conn.SetReadBuffer(_TCP_READ_BUFFER_SIZE)
-		conn.SetWriteBuffer(_TCP_WRITE_BUFFER_SIZE)
+		conn.SetKeepAlivePeriod(time.Second * socket.TCP_KEEPALIVE_PERIOD)
+		conn.SetReadBuffer(socket.TCP_READ_BUFFER_SIZE)
+		conn.SetWriteBuffer(socket.TCP_WRITE_BUFFER_SIZE)
 
-		go c.serviceConn(conn)
+		go c.srvConn(conn)
 	}
 }
 
-func (c *GateEntry) serviceConn(cc net.Conn) error {
-	err := utils.Handshake(cc, c.gateOption.Cookie, c.gateOption.Timeout)
+func (c *GateEntry) srvConn(cc net.Conn) error {
+	r, w, closer := socket.NewChanSocket(socket.NewSocket(cc), 0, time.Second*30)
+	defer closer()
+
+	session, err := c.sessionGenerator()
 	if err != nil {
-		cc.Close()
 		return err
 	}
 
-	s := newConnService(c, c.f.GenerateSession(), socket.NewSocket(cc))
-
-	c.insertConn(s)
-	defer c.deleteConn(s.session)
-
-	return s.RunService()
-}
-
-func (c *GateEntry) insertConn(s *_ConnService) {
-	c.connLock.Lock()
-	defer c.connLock.Unlock()
-
-	c.connMap[s.session] = s
-}
-
-func (c *GateEntry) deleteConn(session uint64) {
-	c.connLock.Lock()
-	defer c.connLock.Unlock()
-
-	s, ok := c.connMap[session]
-	if !ok {
-		return
+	conn := &_Conn{
+		entry:   c,
+		session: session,
+		r:       r,
+		w:       w,
+		closer:  closer,
 	}
-	delete(c.connMap, session)
-	s.Close()
+
+	c.addConn(session, conn)
+	defer c.deleteConn(session)
+
+	return conn.start()
+}
+
+func (c *GateEntry) writeConn(session uint64, data []byte) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	conn, ok := c.connList[session]
+	if !ok {
+		return ErrSessionNotExist
+	}
+
+	conn.w <- data
+
+	return nil
+}
+
+func (c *GateEntry) addConn(session uint64, conn *_Conn) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	c.connList[session] = conn
+}
+
+func (c *GateEntry) deleteConn(session uint64) error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	conn, ok := c.connList[session]
+	if !ok {
+		return ErrSessionNotExist
+	}
+
+	delete(c.connList, session)
+
+	conn.closer()
+
+	return nil
 }
