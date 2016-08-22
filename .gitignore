@@ -5,3 +5,5 @@
 *.dll
 *.cdb
 *.conf
+/protos/protos.pb.go
+/protos/protos.rpc.go
