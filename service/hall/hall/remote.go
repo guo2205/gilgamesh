@@ -22,7 +22,7 @@ func (c *Service) service_Room(r io.ReadCloser, id uint64) {
 			delete(c.rooms, id)
 
 			for session, client := range c.clients {
-				protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+				protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 					Data: utils.Marshal(&protos.Hall_RoomDead{
 						Id: id,
 					}),
@@ -58,7 +58,7 @@ func (c *Service) service_Room(r io.ReadCloser, id uint64) {
 					return
 				}
 
-				protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+				protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 					Data: utils.Marshal(&protos.Duel_DataTransfer{
 						Data: d,
 					}),
@@ -98,7 +98,7 @@ func (c *Service) service_Room(r io.ReadCloser, id uint64) {
 				}
 
 				for session, client := range c.clients {
-					protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+					protos.New_GameGateService_ServiceClient(c.f, client.Where).Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 						Data: d,
 					})
 				}

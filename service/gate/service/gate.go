@@ -47,7 +47,7 @@ func NewService(logger mylog.Logger,
 	}
 }
 
-func (c *Service) On_EntryDataRequest(caller string, session uint64, in *protos.Internal_GameGate_EntryDataRequest, responser func(e error)) {
+func (c *Service) On_EntryData(caller string, session uint64, in *protos.Internal_GameGate_EntryDataRequest, responser func(e error)) {
 	obj, family, err := utils.Unmarshal(in.Data)
 	if err != nil {
 		c.logger.Debug("unmarshal failed:", err)
@@ -77,19 +77,19 @@ func (c *Service) On_EntryDataRequest(caller string, session uint64, in *protos.
 	return
 }
 
-func (c *Service) On_PassThroughRequest(caller string, session uint64, in *protos.Internal_GameGate_PassThroughRequest, responser func(e error)) {
+func (c *Service) On_PassThrough(caller string, session uint64, in *protos.Internal_GameGate_PassThroughRequest, responser func(e error)) {
 	responser(c.writer(session, in.Data))
 }
 
-func (c *Service) On_KickRequest(caller string, session uint64, in *protos.Internal_GameGate_KickRequest, responser func(e error)) {
+func (c *Service) On_Kick(caller string, session uint64, in *protos.Internal_GameGate_KickRequest, responser func(e error)) {
 	responser(c.closer(in.Session))
 }
 
-func (c *Service) On_MyOfflineRequest(caller string, session uint64, responser func(e error)) {
+func (c *Service) On_MyOffline(caller string, session uint64, responser func(e error)) {
 	client, ok := c.clients[session]
 	if ok {
 		// 通知大厅用户离开
-		protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_LeaveRequest_Cps("gate", session, time.Second*3, func(out *protos.Internal_Hall_LeaveResponse, to string, e error) {
+		protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_Leave_Cps("gate", session, time.Second*3, func(out *protos.Internal_Hall_LeaveResponse, to string, e error) {
 			if e != nil {
 				c.logger.Warningf("[%s %d] leave hall failed : %v\n", client.Account, client.Session, e)
 			} else if !out.Success {
@@ -97,7 +97,7 @@ func (c *Service) On_MyOfflineRequest(caller string, session uint64, responser f
 			}
 
 			// 设置用户离线
-			protos.New_GlobalOnlineStateService_ServiceClient(c.f, "/public/global.online").Call_SetRequest_Cps("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_SetRequest{
+			protos.New_GlobalOnlineStateService_ServiceClient(c.f, "/public/global.online").Call_Set_Cps("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_SetRequest{
 				Account: client.Account,
 				State:   false,
 			}, func(out *protos.Internal_Global_Response, to string, e error) {

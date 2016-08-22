@@ -27,7 +27,7 @@ func NewService(
 	}
 }
 
-func (c *Service) On_QueryRequest(caller string, session uint64, in *protos.Internal_Global_OnlineState_QueryRequest, responser func(out *protos.Internal_Global_OnlineState_QueryResponse, e error)) {
+func (c *Service) On_Query(caller string, session uint64, in *protos.Internal_Global_OnlineState_QueryRequest, responser func(out *protos.Internal_Global_OnlineState_QueryResponse, e error)) {
 	response := protos.Internal_Global_OnlineState_QueryResponse{}
 
 	state, ok := c.accountStateMap[in.Account]
@@ -41,7 +41,7 @@ func (c *Service) On_QueryRequest(caller string, session uint64, in *protos.Inte
 	responser(&response, nil)
 }
 
-func (c *Service) On_SetRequest(caller string, session uint64, in *protos.Internal_Global_OnlineState_SetRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+func (c *Service) On_Set(caller string, session uint64, in *protos.Internal_Global_OnlineState_SetRequest, responser func(out *protos.Internal_Global_Response, e error)) {
 	if in.State {
 		_, ok := c.accountStateMap[in.Account]
 		if ok {

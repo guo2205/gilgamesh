@@ -61,7 +61,7 @@ func NewService(
 	}
 }
 
-func (c *Service) On_EnterRequest(caller string, session uint64, in *protos.Internal_Hall_EnterRequest, responser func(e error)) {
+func (c *Service) On_Enter(caller string, session uint64, in *protos.Internal_Hall_EnterRequest, responser func(e error)) {
 	c.clients[session] = &_Client{
 		Account: in.Account,
 		Where:   caller,
@@ -69,7 +69,7 @@ func (c *Service) On_EnterRequest(caller string, session uint64, in *protos.Inte
 
 	gateClient := protos.New_GameGateService_ServiceClient(c.f, caller)
 
-	gateClient.Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+	gateClient.Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 		Data: utils.Marshal(&protos.Hall_YouEnter{}),
 	})
 
@@ -80,7 +80,7 @@ func (c *Service) On_EnterRequest(caller string, session uint64, in *protos.Inte
 		}
 		roomList = append(roomList, v.Room)
 	}
-	gateClient.Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+	gateClient.Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 		Data: utils.Marshal(&protos.Hall_RoomList{
 			List: roomList,
 		}),
@@ -89,7 +89,7 @@ func (c *Service) On_EnterRequest(caller string, session uint64, in *protos.Inte
 	responser(nil)
 }
 
-func (c *Service) On_LeaveRequest(caller string, session uint64, responser func(out *protos.Internal_Hall_LeaveResponse, e error)) {
+func (c *Service) On_Leave(caller string, session uint64, responser func(out *protos.Internal_Hall_LeaveResponse, e error)) {
 	client, ok := c.clients[session]
 	if ok {
 		if client.Room != 0 {
@@ -103,7 +103,7 @@ func (c *Service) On_LeaveRequest(caller string, session uint64, responser func(
 
 	gateClient := protos.New_GameGateService_ServiceClient(c.f, caller)
 
-	gateClient.Call_PassThroughRequest("hall", session, &protos.Internal_GameGate_PassThroughRequest{
+	gateClient.Call_PassThrough("hall", session, &protos.Internal_GameGate_PassThroughRequest{
 		Data: utils.Marshal(&protos.Hall_YouLeave{}),
 	})
 
@@ -112,7 +112,7 @@ func (c *Service) On_LeaveRequest(caller string, session uint64, responser func(
 	}, nil)
 }
 
-func (c *Service) On_CreateRoomRequest(caller string, session uint64, in *protos.Internal_Hall_CreateRoomRequest, responser func(e error)) {
+func (c *Service) On_CreateRoom(caller string, session uint64, in *protos.Internal_Hall_CreateRoomRequest, responser func(e error)) {
 	client, ok := c.clients[session]
 	if !ok {
 		c.logger.Warningf("[%d] not found client session\n", session)
@@ -171,7 +171,7 @@ func (c *Service) On_CreateRoomRequest(caller string, session uint64, in *protos
 	responser(nil)
 }
 
-func (c *Service) On_EnterRoomRequest(caller string, session uint64, in *protos.Internal_Hall_EnterRoomRequest, responser func(e error)) {
+func (c *Service) On_EnterRoom(caller string, session uint64, in *protos.Internal_Hall_EnterRoomRequest, responser func(e error)) {
 	client, ok := c.clients[session]
 	if !ok {
 		responser(ErrNotFoundClient)

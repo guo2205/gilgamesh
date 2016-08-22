@@ -43,7 +43,7 @@ func main() {
 	gateEntry := entry.NewEntry(gateOption.LocalAddr,
 		f.GenerateSession,
 		func(session uint64, data []byte) error {
-			_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_EntryDataRequest("entry", session, &protos.Internal_GameGate_EntryDataRequest{
+			_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_EntryData("entry", session, &protos.Internal_GameGate_EntryDataRequest{
 				Data: data,
 			})
 			return err

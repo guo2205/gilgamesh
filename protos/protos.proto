@@ -259,6 +259,12 @@ message Internal{
 	
 	// 聊天消息
 	message Chat{
+		// 进入大厅聊天
+		message EnterHallRequest{}
+		
+		// 离开大厅聊天
+		message LeaveHallRequest{}
+		
 		// 大厅聊天
 		message HallRequest{
 			string Account = 1;
@@ -269,10 +275,10 @@ message Internal{
 
 // 网关服务
 service GameGateService{
-	rpc EntryDataRequest(Internal.GameGate.EntryDataRequest) returns(Null);
-	rpc PassThroughRequest(Internal.GameGate.PassThroughRequest) returns(Null);
-	rpc KickRequest(Internal.GameGate.KickRequest) returns(Null);
-	rpc MyOfflineRequest(Null) returns(Null);
+	rpc EntryData(Internal.GameGate.EntryDataRequest) returns(Null);
+	rpc PassThrough(Internal.GameGate.PassThroughRequest) returns(Null);
+	rpc Kick(Internal.GameGate.KickRequest) returns(Null);
+	rpc MyOffline(Null) returns(Null);
 }
 
 // 认证服务
@@ -282,26 +288,28 @@ service AuthService{
 
 // 全局锁服务
 service GlobalLockerService{
-	rpc AcquireRequest(Internal.Global.Locker.AcquireRequest) returns(Internal.Global.Response);
-	rpc ReleaseRequest(Internal.Global.Locker.ReleaseRequest) returns(Internal.Global.Response);
+	rpc Acquire(Internal.Global.Locker.AcquireRequest) returns(Internal.Global.Response);
+	rpc Release(Internal.Global.Locker.ReleaseRequest) returns(Internal.Global.Response);
 }
 
 // 全局在线状态服务
 service GlobalOnlineStateService{
-	rpc QueryRequest(Internal.Global.OnlineState.QueryRequest) returns(Internal.Global.OnlineState.QueryResponse);
-	rpc SetRequest(Internal.Global.OnlineState.SetRequest) returns(Internal.Global.Response);
+	rpc Query(Internal.Global.OnlineState.QueryRequest) returns(Internal.Global.OnlineState.QueryResponse);
+	rpc Set(Internal.Global.OnlineState.SetRequest) returns(Internal.Global.Response);
 }
 
 // 大厅服务
 service HallService{
-	rpc EnterRequest(Internal.Hall.EnterRequest) returns(Null);
-	rpc LeaveRequest(Null) returns(Internal.Hall.LeaveResponse);
-	rpc CreateRoomRequest(Internal.Hall.CreateRoomRequest) returns(Null);
-	rpc EnterRoomRequest(Internal.Hall.EnterRoomRequest) returns(Null);
+	rpc Enter(Internal.Hall.EnterRequest) returns(Null);
+	rpc Leave(Null) returns(Internal.Hall.LeaveResponse);
+	rpc CreateRoom(Internal.Hall.CreateRoomRequest) returns(Null);
+	rpc EnterRoom(Internal.Hall.EnterRoomRequest) returns(Null);
 	rpc DataTransfer(Internal.Duel.DataTransfer) returns(Null);
 }
 
 // 聊天服务
 service ChatService{
+	rpc EnterHall(Internal.Chat.EnterHallRequest) returns(Null);
+	rpc LeaveHall(Internal.Chat.LeaveHallRequest) returns(Null);
 	rpc HallChat(Internal.Chat.HallRequest) returns(Null);
 }

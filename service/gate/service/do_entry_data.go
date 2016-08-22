@@ -54,7 +54,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		lockerClient := protos.New_GlobalLockerService_ServiceClient(c.f, "/public/global.locker")
 
 		// 获取登录锁
-		lockResp, _, err := lockerClient.Call_AcquireRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_AcquireRequest{
+		lockResp, _, err := lockerClient.Call_Acquire_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_AcquireRequest{
 			Key: obj.Account,
 		})
 
@@ -78,7 +78,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		onlineClient := protos.New_GlobalOnlineStateService_ServiceClient(c.f, "/public/global.online")
 
 		// 查询状态
-		queryResp, _, err := onlineClient.Call_QueryRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_QueryRequest{
+		queryResp, _, err := onlineClient.Call_Query_Sync("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_QueryRequest{
 			Account: obj.Account,
 		})
 
@@ -89,7 +89,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 			c.closer(session)
 			responser(err)
 
-			resp, _, err := lockerClient.Call_ReleaseRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+			resp, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 				Key: obj.Account,
 			})
 			if err != nil {
@@ -103,7 +103,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 
 		if queryResp.State {
 			// 账号在线，踢人
-			_, err := protos.New_GameGateService_ServiceClient(c.f, queryResp.Where).Call_KickRequest("gate", session, &protos.Internal_GameGate_KickRequest{
+			_, err := protos.New_GameGateService_ServiceClient(c.f, queryResp.Where).Call_Kick("gate", session, &protos.Internal_GameGate_KickRequest{
 				Session: queryResp.Session,
 			})
 			// 失败
@@ -114,7 +114,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 			c.closer(session)
 			responser(ErrAlreadyOnlineFailed)
 
-			releaseResponse, _, err := lockerClient.Call_ReleaseRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+			releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 				Key: obj.Account,
 			})
 
@@ -128,7 +128,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		}
 
 		// 设置在线状态和所在网关
-		setResp, _, err := onlineClient.Call_SetRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_SetRequest{
+		setResp, _, err := onlineClient.Call_Set_Sync("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_SetRequest{
 			Account: obj.Account,
 			State:   true,
 		})
@@ -143,7 +143,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 			c.closer(session)
 			responser(ErrSetOnlineFailed)
 
-			releaseResponse, _, err := lockerClient.Call_ReleaseRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+			releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 				Key: obj.Account,
 			})
 
@@ -173,7 +173,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		hallClient := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall")
 
 		// 通知大厅新用户进入
-		_, err = hallClient.Call_EnterRequest("gate", session, &protos.Internal_Hall_EnterRequest{
+		_, err = hallClient.Call_Enter("gate", session, &protos.Internal_Hall_EnterRequest{
 			Account: obj.Account,
 		})
 		// 失败，解锁
@@ -183,7 +183,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 			c.closer(session)
 			responser(err)
 
-			releaseResponse, _, err := lockerClient.Call_ReleaseRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+			releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 				Key: obj.Account,
 			})
 
@@ -197,7 +197,7 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		}
 
 		// 登录结束，解锁
-		releaseResponse, _, err := lockerClient.Call_ReleaseRequest_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+		releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 			Key: obj.Account,
 		})
 
@@ -236,7 +236,7 @@ func (c *Service) do_Chat_HallRequest(session uint64, obj *protos.Chat_HallReque
 }
 
 func (c *Service) do_Hall_EnterRoomRequest(session uint64, obj *protos.Hall_EnterRoomRequest, responser func(e error)) {
-	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_EnterRoomRequest("gate", session, &protos.Internal_Hall_EnterRoomRequest{
+	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_EnterRoom("gate", session, &protos.Internal_Hall_EnterRoomRequest{
 		Id:       obj.Id,
 		Password: obj.Password,
 	})
@@ -247,7 +247,7 @@ func (c *Service) do_Hall_EnterRoomRequest(session uint64, obj *protos.Hall_Ente
 }
 
 func (c *Service) do_Hall_CreateRoomRequest(session uint64, obj *protos.Hall_CreateRoomRequest, responser func(e error)) {
-	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_CreateRoomRequest("gate", session, &protos.Internal_Hall_CreateRoomRequest{
+	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_CreateRoom("gate", session, &protos.Internal_Hall_CreateRoomRequest{
 		Option: obj.Option,
 	})
 	if err != nil {

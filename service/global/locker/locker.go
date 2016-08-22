@@ -26,7 +26,7 @@ func NewService(
 	}
 }
 
-func (c *Service) On_AcquireRequest(caller string, session uint64, in *protos.Internal_Global_Locker_AcquireRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+func (c *Service) On_Acquire(caller string, session uint64, in *protos.Internal_Global_Locker_AcquireRequest, responser func(out *protos.Internal_Global_Response, e error)) {
 	_, ok := c.globalLock[in.Key]
 	if !ok {
 		c.logger.Infof("[%s %d] locked\n", in.Key, session)
@@ -46,7 +46,7 @@ func (c *Service) On_AcquireRequest(caller string, session uint64, in *protos.In
 	}, nil)
 }
 
-func (c *Service) On_ReleaseRequest(caller string, session uint64, in *protos.Internal_Global_Locker_ReleaseRequest, responser func(out *protos.Internal_Global_Response, e error)) {
+func (c *Service) On_Release(caller string, session uint64, in *protos.Internal_Global_Locker_ReleaseRequest, responser func(out *protos.Internal_Global_Response, e error)) {
 	locker, ok := c.globalLock[in.Key]
 	if !ok {
 		responser(&protos.Internal_Global_Response{
