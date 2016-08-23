@@ -96,6 +96,9 @@ func (c *Service) On_MyOffline(caller string, session uint64, responser func(e e
 				c.logger.Warningf("[%s %d] leave hall failed : unknown reason\n", client.Account, client.Session)
 			}
 
+			// 离开聊天
+			protos.New_ChatService_ServiceClient(c.f, "/ygo/chat.chat").Call_LeaveHall("gate", session)
+
 			// 设置用户离线
 			protos.New_GlobalOnlineStateService_ServiceClient(c.f, "/public/global.online").Call_Set_Cps("gate", session, time.Second*3, &protos.Internal_Global_OnlineState_SetRequest{
 				Account: client.Account,

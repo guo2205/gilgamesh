@@ -199,6 +199,31 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 			return
 		}
 
+		// 创建聊天客户端
+		chatClient := protos.New_ChatService_ServiceClient(c.f, "/ygo/chat.chat")
+
+		// 进入大厅聊天
+		_, err = chatClient.Call_EnterHall("gate", session)
+		// 失败，解锁
+		if err != nil {
+			c.logger.Warningf("[%s %d] enter chat failed :%v\n", obj.Account, session, err)
+
+			c.closer(session)
+			responser(err)
+
+			releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
+				Key: obj.Account,
+			})
+
+			if err != nil {
+				c.logger.Warningf("[%s %d] release lock failed :%v\n", obj.Account, session, err)
+			} else if !releaseResponse.Success {
+				c.logger.Warningf("[%s %d] release lock failed :unknown\n", obj.Account, session)
+			}
+
+			return
+		}
+
 		// 登录结束，解锁
 		releaseResponse, _, err := lockerClient.Call_Release_Sync("gate", session, time.Second*3, &protos.Internal_Global_Locker_ReleaseRequest{
 			Key: obj.Account,

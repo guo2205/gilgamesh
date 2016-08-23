@@ -259,12 +259,6 @@ message Internal{
 	
 	// 聊天消息
 	message Chat{
-		// 进入大厅聊天
-		message EnterHallRequest{}
-		
-		// 离开大厅聊天
-		message LeaveHallRequest{}
-		
 		// 大厅聊天
 		message HallRequest{
 			string Account = 1;
@@ -309,7 +303,7 @@ service HallService{
 
 // 聊天服务
 service ChatService{
-	rpc EnterHall(Internal.Chat.EnterHallRequest) returns(Null);
-	rpc LeaveHall(Internal.Chat.LeaveHallRequest) returns(Null);
+	rpc EnterHall(Null) returns(Null);
+	rpc LeaveHall(Null) returns(Null);
 	rpc HallChat(Internal.Chat.HallRequest) returns(Null);
 }

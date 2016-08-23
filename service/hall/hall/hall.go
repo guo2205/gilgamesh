@@ -181,7 +181,7 @@ func (c *Service) On_EnterRoom(caller string, session uint64, in *protos.Interna
 
 	room, ok := c.rooms[in.Id]
 	if !ok {
-		responser(ErrNotFoundRoom)
+		responser(nil)
 		c.logger.Warningf("[%s %d] enter room but not found id : %d\n", client.Account, session, in.Id)
 		return
 	}
