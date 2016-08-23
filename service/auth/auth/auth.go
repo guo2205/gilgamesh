@@ -39,3 +39,19 @@ func (c *Service) On_Auth(caller string, session uint64, in *protos.Auth_AuthReq
 		Success: true,
 	}, nil)
 }
+
+func (c *Service) On_Register(caller string, session uint64, in *protos.Auth_RegisterRequest, responser func(out *protos.Auth_RegisterResponse, e error)) {
+	var out *protos.Auth_RegisterResponse
+	reason, ok, err := models.Register(in.Account, hex.EncodeToString(in.Password))
+	if err == nil && ok {
+		out = &protos.Auth_RegisterResponse{
+			Success: true,
+		}
+	} else {
+		out = &protos.Auth_RegisterResponse{
+			Success: false,
+			Reason:  reason,
+		}
+	}
+	responser(out, nil)
+}

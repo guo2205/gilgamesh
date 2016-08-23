@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	ErrAlreadyAuthed       error = errors.New("already authed")
 	ErrNotFoundClient      error = errors.New("not found client")
 	ErrAuthFailed          error = errors.New("auth failed")
 	ErrLockFailed          error = errors.New("lock failed")
@@ -19,6 +20,13 @@ var (
 )
 
 func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthRequest, responser func(e error)) {
+	_, ok := c.clients[session]
+	if ok {
+		c.logger.Errorf("[%d] already authed")
+		responser(ErrAlreadyAuthed)
+		return
+	}
+
 	go func() {
 		c.logger.Debugf("[%s %d] auth : [%s]\n", obj.Account, session, hex.EncodeToString(obj.Password))
 
@@ -246,6 +254,28 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 	}()
 }
 
+func (c *Service) do_Auth_RegisterRequest(session uint64, obj *protos.Auth_RegisterRequest, responser func(e error)) {
+	// 创建认证客户端
+	authClient := protos.New_AuthService_ServiceClient(c.f, "/public/auth/?.auth")
+
+	// 注册
+	authClient.Call_Register_Cps("gate", session, time.Second*3, obj, func(out *protos.Auth_RegisterResponse, to string, e error) {
+		if e != nil {
+			responser(e)
+			c.logger.Warningf("[%d] register account failed :%v\n", session, e)
+			return
+		}
+
+		if err := c.writer(session, utils.Marshal(out)); err != nil {
+			responser(err)
+			c.closer(session)
+			return
+		}
+
+		responser(nil)
+	})
+}
+
 func (c *Service) do_Chat_HallRequest(session uint64, obj *protos.Chat_HallRequest, responser func(e error)) {
 	client, ok := c.clients[session]
 	if !ok {
@@ -264,6 +294,12 @@ func (c *Service) do_Chat_HallRequest(session uint64, obj *protos.Chat_HallReque
 }
 
 func (c *Service) do_Hall_EnterRoomRequest(session uint64, obj *protos.Hall_EnterRoomRequest, responser func(e error)) {
+	_, ok := c.clients[session]
+	if !ok {
+		responser(ErrNotFoundClient)
+		return
+	}
+
 	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_EnterRoom("gate", session, &protos.Internal_Hall_EnterRoomRequest{
 		Id:       obj.Id,
 		Password: obj.Password,
@@ -275,6 +311,12 @@ func (c *Service) do_Hall_EnterRoomRequest(session uint64, obj *protos.Hall_Ente
 }
 
 func (c *Service) do_Hall_CreateRoomRequest(session uint64, obj *protos.Hall_CreateRoomRequest, responser func(e error)) {
+	_, ok := c.clients[session]
+	if !ok {
+		responser(ErrNotFoundClient)
+		return
+	}
+
 	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_CreateRoom("gate", session, &protos.Internal_Hall_CreateRoomRequest{
 		Option: obj.Option,
 	})
@@ -285,6 +327,12 @@ func (c *Service) do_Hall_CreateRoomRequest(session uint64, obj *protos.Hall_Cre
 }
 
 func (c *Service) do_Duel_DataTransfer(session uint64, obj *protos.Duel_DataTransfer, responser func(e error)) {
+	_, ok := c.clients[session]
+	if !ok {
+		responser(ErrNotFoundClient)
+		return
+	}
+
 	_, err := protos.New_HallService_ServiceClient(c.f, "/ygo/hall.hall").Call_DataTransfer("gate", session, &protos.Internal_Duel_DataTransfer{
 		Data: obj.Data,
 	})

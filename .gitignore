@@ -7,3 +7,4 @@
 *.conf
 /protos/protos.pb.go
 /protos/protos.rpc.go
+/release/db/db3.sqlite3

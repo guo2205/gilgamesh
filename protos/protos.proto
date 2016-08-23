@@ -86,6 +86,18 @@ message Auth{
 		bool Success = 1;
 		string Reason = 2;
 	}
+	
+	// 注册
+	message RegisterRequest{
+		string Account = 1;
+		bytes Password = 2;
+	}
+	
+	// 注册结果
+	message RegisterResponse{
+		bool Success = 1;
+		string Reason = 2;
+	}
 }
 	
 // 聊天消息
@@ -278,6 +290,7 @@ service GameGateService{
 // 认证服务
 service AuthService{
 	rpc Auth(Auth.AuthRequest) returns(Auth.AuthResponse);
+	rpc Register(Auth.RegisterRequest) returns(Auth.RegisterResponse);
 }
 
 // 全局锁服务

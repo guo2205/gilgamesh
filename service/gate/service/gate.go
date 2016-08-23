@@ -58,6 +58,8 @@ func (c *Service) On_EntryData(caller string, session uint64, in *protos.Interna
 	switch family {
 	case proto.MessageName((*protos.Auth_AuthRequest)(nil)):
 		c.do_Auth_AuthRequest(session, obj.(*protos.Auth_AuthRequest), responser)
+	case proto.MessageName((*protos.Auth_RegisterRequest)(nil)):
+		c.do_Auth_RegisterRequest(session, obj.(*protos.Auth_RegisterRequest), responser)
 
 	case proto.MessageName((*protos.Chat_HallRequest)(nil)):
 		c.do_Chat_HallRequest(session, obj.(*protos.Chat_HallRequest), responser)
