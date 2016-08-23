@@ -84,10 +84,10 @@ func (c *GateEntry) listener(l *net.TCPListener) {
 
 func (c *GateEntry) srvConn(cc net.Conn) error {
 	r, w, closer := socket.NewChanSocket(socket.NewSocket(cc), 0, time.Second*30)
-	defer closer()
 
 	session, err := c.sessionGenerator()
 	if err != nil {
+		closer()
 		return err
 	}
 

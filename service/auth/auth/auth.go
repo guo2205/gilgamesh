@@ -35,5 +35,7 @@ func (c *Service) On_Auth(caller string, session uint64, in *protos.Auth_AuthReq
 		return
 	}
 
-	responser(nil, nil)
+	responser(&protos.Auth_AuthResponse{
+		Success: true,
+	}, nil)
 }

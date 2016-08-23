@@ -21,13 +21,17 @@ type _Conn struct {
 }
 
 func (c *_Conn) start() error {
-	defer c.entry.deleteConn(c.session)
+	defer c.entry.onData(c.session, nil)
 
 	qos := 0
 
 	for {
 		select {
-		case ev := <-c.r:
+		case ev, ok := <-c.r:
+			if !ok {
+				return nil
+			}
+
 			if ev.Error != nil {
 				return ev.Error
 			}

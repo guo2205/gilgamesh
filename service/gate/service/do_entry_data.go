@@ -35,13 +35,16 @@ func (c *Service) do_Auth_AuthRequest(session uint64, obj *protos.Auth_AuthReque
 		}
 
 		// 写回结果
-		err = c.writer(session, utils.Marshal(obj))
+		err = c.writer(session, utils.Marshal(authResp))
 		if err != nil {
 			c.logger.Warningf("[%s %d] write auth response failed :%v\n", obj.Account, session, err)
 			c.closer(session)
 			responser(err)
 			return
 		}
+
+		// 等待写入完毕
+		time.Sleep(time.Millisecond * 100)
 
 		// 认证失败
 		if !authResp.Success {

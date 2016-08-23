@@ -20,7 +20,7 @@ const (
 
 var (
 	logger     mylog.Logger = mylog.NewLogger(`Gate Node`, _DEBUG_LEVEL, log.LstdFlags)
-	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, _DEBUG_LEVEL, log.LstdFlags)
+	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, _DEBUG_LEVEL, log.LstdFlags|log.Lshortfile)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
@@ -43,10 +43,15 @@ func main() {
 	gateEntry := entry.NewEntry(gateOption.LocalAddr,
 		f.GenerateSession,
 		func(session uint64, data []byte) error {
-			_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_EntryData("entry", session, &protos.Internal_GameGate_EntryDataRequest{
-				Data: data,
-			})
-			return err
+			if data != nil {
+				_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_EntryData("entry", session, &protos.Internal_GameGate_EntryDataRequest{
+					Data: data,
+				})
+				return err
+			} else {
+				_, err := protos.New_GameGateService_ServiceClient(f, "gate").Call_MyOffline("entry", session)
+				return err
+			}
 		},
 		&entry.Option{
 			PerSecondMaxPacket: gateOption.PerSecondMaxPacket,
