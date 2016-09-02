@@ -20,7 +20,7 @@ const (
 
 var (
 	logger     mylog.Logger = mylog.NewLogger(`Gate Node`, _DEBUG_LEVEL, log.LstdFlags)
-	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, _DEBUG_LEVEL, log.LstdFlags|log.Lshortfile)
+	gateLogger mylog.Logger = mylog.NewLogger(`Gate Service`, _DEBUG_LEVEL, log.LstdFlags)
 
 	ErrLoadConfigFailed error = errors.New("load config failed")
 )
