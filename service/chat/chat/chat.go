@@ -2,10 +2,9 @@
 package chat
 
 import (
-	"gilgamesh/protos"
-	"gilgamesh/utility/utils"
-
 	"github.com/liuhanlcj/fractal/fractal/sdk"
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/utility/utils"
 	"github.com/liuhanlcj/mylog"
 )
 
@@ -24,14 +23,14 @@ func NewService(logger mylog.Logger, f *fsdk.Fractal) *Service {
 	}
 }
 
-func (c *Service) On_EnterHall(caller string, session uint64, in *protos.Internal_Chat_EnterHallRequest, responser func(e error)) {
+func (c *Service) On_EnterHall(caller string, session uint64, responser func(e error)) {
 	c.visitors[session] = caller
 	responser(nil)
 
 	c.logger.Infof("[%d %s] enter chat\n", session, caller)
 }
 
-func (c *Service) On_LeaveHall(caller string, session uint64, in *protos.Internal_Chat_LeaveHallRequest, responser func(e error)) {
+func (c *Service) On_LeaveHall(caller string, session uint64, responser func(e error)) {
 	delete(c.visitors, session)
 	responser(nil)
 

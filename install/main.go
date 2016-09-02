@@ -3,10 +3,10 @@ package main
 
 import (
 	"errors"
-	"gilgamesh/utility/config"
-	"gilgamesh/utility/models"
 	"log"
 
+	"github.com/liuhanlcj/gilgamesh/utility/config"
+	"github.com/liuhanlcj/gilgamesh/utility/models"
 	"github.com/liuhanlcj/mylog"
 )
 

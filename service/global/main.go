@@ -3,14 +3,14 @@ package main
 
 import (
 	"errors"
-	"gilgamesh/protos"
-	"gilgamesh/service/global/locker"
-	"gilgamesh/service/global/online"
-	"gilgamesh/utility/config"
 	"log"
 	"time"
 
 	"github.com/liuhanlcj/fractal/fractal/sdk"
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/service/global/locker"
+	"github.com/liuhanlcj/gilgamesh/service/global/online"
+	"github.com/liuhanlcj/gilgamesh/utility/config"
 	"github.com/liuhanlcj/mylog"
 )
 

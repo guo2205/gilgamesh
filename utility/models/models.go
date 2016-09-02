@@ -3,11 +3,11 @@ package models
 
 import (
 	"fmt"
-	"gilgamesh/utility/config"
 	"log"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/xorm"
+	"github.com/liuhanlcj/gilgamesh/utility/config"
 	_ "github.com/mattn/go-sqlite3"
 )
 

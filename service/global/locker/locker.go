@@ -2,8 +2,7 @@
 package locker
 
 import (
-	"gilgamesh/protos"
-
+	"github.com/liuhanlcj/gilgamesh/protos"
 	"github.com/liuhanlcj/mylog"
 )
 

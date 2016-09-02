@@ -4,13 +4,13 @@ package hall
 import (
 	"bufio"
 	"encoding/base64"
-	"gilgamesh/protos"
-	"gilgamesh/utility/utils"
 	"io"
 	"strconv"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/utility/utils"
 )
 
 func (c *Service) service_Room(r io.ReadCloser, id uint64) {

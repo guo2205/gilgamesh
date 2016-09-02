@@ -4,9 +4,10 @@ package service
 import (
 	"encoding/hex"
 	"errors"
-	"gilgamesh/protos"
-	"gilgamesh/utility/utils"
 	"time"
+
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/utility/utils"
 )
 
 var (

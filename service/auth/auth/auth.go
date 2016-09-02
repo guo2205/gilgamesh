@@ -3,9 +3,9 @@ package auth
 
 import (
 	"encoding/hex"
-	"gilgamesh/protos"
-	"gilgamesh/utility/models"
 
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/utility/models"
 	"github.com/liuhanlcj/mylog"
 )
 

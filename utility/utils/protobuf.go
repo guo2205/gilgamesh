@@ -3,10 +3,10 @@ package utils
 
 import (
 	"errors"
-	"gilgamesh/protos"
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/liuhanlcj/gilgamesh/protos"
 )
 
 var (

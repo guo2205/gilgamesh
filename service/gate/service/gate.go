@@ -3,13 +3,13 @@ package service
 
 import (
 	"errors"
-	"gilgamesh/protos"
-	"gilgamesh/utility/config"
-	"gilgamesh/utility/utils"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/liuhanlcj/fractal/fractal/sdk"
+	"github.com/liuhanlcj/gilgamesh/protos"
+	"github.com/liuhanlcj/gilgamesh/utility/config"
+	"github.com/liuhanlcj/gilgamesh/utility/utils"
 	"github.com/liuhanlcj/mylog"
 )
 
